@@ -852,6 +852,29 @@
         #clientRows { flex: 1 1 auto; min-height: 0; max-height: none; }
         #managePanel { height: 100%; max-height: 100%; min-height: 0; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
       }
+
+      /* ================================================================
+         Auth screen v2 — the sign-in card floated near the top of
+         the page with a tall empty void underneath it, the brand
+         panel stretched with a dead gap before its footer line, and
+         two stacked note paragraphs (the second only repeating the
+         Forgot password link above it) made the form side drag.
+         The card is now centred in the viewport, the brand panel
+         spacing is tightened, and the redundant note is gone from
+         the markup, so both halves end at a similar height.
+         ================================================================ */
+      #authView {
+        display: flex; align-items: center; justify-content: center;
+        min-height: calc(100vh - 110px); min-height: calc(100dvh - 110px);
+        margin: 0 auto;
+      }
+      #authView .auth-shell { width: 100%; }
+      .auth-brand h2 { margin-top: 24px; }
+      .auth-brand ul { margin-top: 22px; padding-top: 20px; }
+      .auth-brand .ab-foot { padding-top: 22px; }
+      @media (max-width: 900px) {
+        #authView { min-height: 0; align-items: flex-start; }
+      }
     </style>
   </head>
   <body>
@@ -866,7 +889,7 @@
               <p class="ab-name">NovaStack</p>
               <p class="ab-tag">Client &amp; Founder Portal</p>
             </div>
-            <h2>Your project, run like a top agency runs it.</h2>
+            <h2>Your project, from brief to launch.</h2>
             <p class="ab-sub">One dashboard for progress, payments and deliverables, updated by the NovaStack team as the work happens.</p>
             <ul>
               <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Live milestones and progress on every project</li>
@@ -914,7 +937,6 @@
           </form>
           <p class="auth-msg" id="authMsg" role="status"></p>
           <p class="auth-note">Clients: create your account with the same email address you gave NovaStack for your project. Your dashboard is linked to that email, and you will only ever see your own project.</p>
-          <p class="auth-note" style="border-top:0;padding-top:0;margin-top:10px">Forgot your password? Use the <strong>Forgot password?</strong> link above — a reset link will be sent to your email. NovaStack never sees or stores your password.</p>
           </div>
         </div>
       </section>
