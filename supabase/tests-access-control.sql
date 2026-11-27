@@ -8,10 +8,12 @@
 -- how many tests failed; a clean run ends with
 -- "ALL ACCESS-CONTROL TESTS PASSED".
 -- Requires: at least one profile with role 'founder' (the founder account).
--- Run the migrations FIRST (migration-2026-11-27-amount-checks.sql and
--- migration-2026-11-27-function-search-path.sql): the negative-amount
--- boundary tests depend on those CHECK constraints, and the
--- function-hardening tests depend on the pinned search_path.
+-- Run the migrations FIRST (migration-2026-11-27-amount-checks.sql,
+-- migration-2026-11-27-function-search-path.sql and
+-- migration-2026-11-27-project-currency.sql): the negative-amount
+-- boundary tests depend on those CHECK constraints, the
+-- function-hardening tests depend on the pinned search_path, and the
+-- currency tests depend on the currency CHECK constraint.
 -- The client fixtures below are synthetic test rows, not real clients.
 
 begin;
@@ -213,7 +215,7 @@ end $$;
 set role authenticated;
 
 do $$
-declare n int; changed int;
+declare n int; changed int; cur text;
 begin
   select count(*) into n from public.clients;
   insert into test_results values ('founder can read all clients', n >= 2, n || ' rows');
@@ -265,6 +267,28 @@ begin
     insert into test_results values ('negative project total is rejected', false, 'update succeeded');
   exception when others then
     insert into test_results values ('negative project total is rejected', true, 'rejected: ' || left(sqlerrm, 80));
+  end;
+
+  begin
+    insert into public.projects (client_id, title, currency) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'USDT Project', 'USDT');
+    insert into test_results values ('founder can set project currency to USDT', true, 'insert succeeded');
+  exception when others then
+    insert into test_results values ('founder can set project currency to USDT', false, 'rejected: ' || left(sqlerrm, 80));
+  end;
+
+  begin
+    insert into public.projects (client_id, title, currency) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Bad Currency', 'EUR');
+    insert into test_results values ('invalid project currency is rejected', false, 'insert succeeded');
+  exception when others then
+    insert into test_results values ('invalid project currency is rejected', true, 'rejected: ' || left(sqlerrm, 80));
+  end;
+
+  begin
+    insert into public.projects (client_id, title) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Default Currency');
+    select currency into cur from public.projects where title = 'Default Currency' and client_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    insert into test_results values ('project currency defaults to PKR', cur = 'PKR', 'currency=' || coalesce(cur, 'null'));
+  exception when others then
+    insert into test_results values ('project currency defaults to PKR', false, 'error: ' || left(sqlerrm, 80));
   end;
 end $$;
 
