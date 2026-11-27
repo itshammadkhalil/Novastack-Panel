@@ -22,6 +22,11 @@
     <title>NovaStack Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Warm the two connections the dashboard needs the moment it boots:
+         the sign-in library CDN and the Supabase API. Connecting early
+         removes a DNS + TLS round trip from sign-in and first data load. -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://ahrcawizoyycsjharjkc.supabase.co" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
     <style>
       :root {
@@ -891,6 +896,20 @@
       }
       .conv-feed .feed { margin-top: 0; }
       .conv-feed .feed li:first-child { padding-top: 2px; }
+
+      /* ================================================================
+         Speed pass — the loading card gets a spinner so a slow network
+         reads as "working", not "stuck".
+         ================================================================ */
+      .loading-card::before {
+        content: ""; display: block; width: 26px; height: 26px; margin: 0 auto 12px;
+        border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand);
+        animation: ns-spin .8s linear infinite;
+      }
+      @keyframes ns-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .loading-card::before { animation: none; }
+      }
     </style>
   </head>
   <body>
@@ -1556,17 +1575,48 @@
         S.detail = null;
         S.detailProjectId = null;
         showOnly("loadingView");
-        return sb.from("profiles").select("*").eq("id", user.id).maybeSingle()
-          .then(function (r) {
-            if (r.error) throw r.error;
-            S.profile = r.data || {
+        /* One parallel wave instead of three sequential ones. Row Level
+           Security already scopes the clients and projects queries to
+           exactly the rows this user may see, so they do not have to wait
+           for the profile result to learn the role; only the project
+           detail fetch depends on the outcome. This cuts a full network
+           round trip off every sign-in, Refresh and page reload, which
+           is where the "login takes forever" wait was coming from. */
+        return Promise.all([
+          sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+          sb.from("clients").select("*").order("created_at", { ascending: false }),
+          sb.from("projects").select("*").order("created_at", { ascending: false })
+        ])
+          .then(function (rs) {
+            if (rs[0].error) throw rs[0].error;
+            S.profile = rs[0].data || {
               id: user.id,
               email: user.email,
               full_name: (user.user_metadata && user.user_metadata.full_name) || "",
               role: "client"
             };
             S.role = S.profile.role === "founder" ? "founder" : "client";
-            return S.role === "founder" ? loadFounderData() : loadClientData();
+            var clientRows = unwrap(rs[1]) || [];
+            var projectRows = unwrap(rs[2]) || [];
+            if (S.role === "founder") {
+              S.clients = clientRows;
+              S.projects = projectRows;
+              if (!clientOf(S.selClientId)) {
+                S.selClientId = S.clients.length ? S.clients[0].id : null;
+              }
+              var fp = S.selClientId ? projectOf(S.selClientId) : null;
+              S.selProjectId = fp ? fp.id : null;
+            } else {
+              S.myClient = clientRows.length ? clientRows[0] : null;
+              /* The client's project picker lists oldest first, as before. */
+              S.projects = projectRows.slice().sort(function (a, b) {
+                return new Date(a.created_at) - new Date(b.created_at);
+              });
+              var stillThere = false;
+              S.projects.forEach(function (p) { if (p.id === S.selProjectId) stillThere = true; });
+              if (!stillThere) S.selProjectId = S.projects.length ? S.projects[0].id : null;
+            }
+            return loadDetail(S.selProjectId);
           })
           .then(function () {
             enteredUserId = user.id;
@@ -1621,12 +1671,13 @@
       }
 
       /* ---------- shared render pieces ---------- */
-      function feedItem(who, isClient, when, title, text) {
+      function feedItem(who, isClient, when, title, text, extra) {
         return "<li>" +
           '<span class="avatar' + (isClient ? " client" : "") + '">' + esc(initials(who)) + "</span>" +
           "<div><span class=\"who\">" + esc(who) + '</span> <span class="when">· ' + esc(when) + "</span>" +
           (title ? '<p class="ttl">' + esc(title) + "</p>" : "") +
           (text ? '<p class="txt">' + esc(text) + "</p>" : "") +
+          (extra || "") +
           "</div></li>";
       }
       function updatesFeed(updates, clientName) {
@@ -1640,8 +1691,99 @@
         if (!messages.length) return '<p class="empty">No messages yet. Start the conversation below.</p>';
         return '<ul class="feed">' + messages.map(function (m) {
           var isClient = m.sender_role === "client";
-          return feedItem(isClient ? (clientName || "Client") : "NovaStack", isClient, fmtDate(m.created_at), "", m.body);
+          /* Optimistic sends: a message the user just wrote is already in
+             the list, marked "Sending...", before the server answers. If
+             the write fails it stays in place with Retry / Remove actions
+             instead of silently vanishing or leaving the text trapped in
+             the compose box. */
+          var when = m.pending ? "Sending..." : fmtDate(m.created_at);
+          var extra = "";
+          if (m.failed) {
+            extra = '<p style="margin-top:5px"><span style="color:var(--red);font-weight:700;font-size:13px">Not sent</span> ' +
+              '<button type="button" class="text-btn" data-retry-msg="' + esc(m.id) + '">Retry</button> ' +
+              '<button type="button" class="text-btn" data-discard-msg="' + esc(m.id) + '">Remove</button></p>';
+          }
+          return feedItem(isClient ? (clientName || "Client") : "NovaStack", isClient, when, "", m.body, extra);
         }).join("") + "</ul>";
+      }
+
+      /* ---------- optimistic message sending ----------
+         Pressing Send used to wait for the insert AND a full five-table
+         reload AND a whole-view re-render before the message appeared,
+         with the text sitting in the compose box the whole time — so
+         people re-clicked Send, refreshed, or assumed an internet fault.
+         Now the message joins the conversation the moment Send is
+         pressed, the box clears, and only the single insert runs in the
+         background; the row it returns replaces the temporary one in
+         place. Nothing else is refetched. */
+      var tmpMsgSeq = 0;
+      function sendMessage(projectId, role, text, repaint) {
+        var tmp = {
+          id: "tmp-" + (++tmpMsgSeq) + "-" + Date.now(),
+          project_id: projectId,
+          sender_role: role,
+          body: text,
+          created_at: new Date().toISOString(),
+          pending: true,
+          failed: false
+        };
+        var optimistic = !!(S.detail && S.detailProjectId === projectId);
+        if (optimistic) S.detail.messages.push(tmp);
+        repaint();
+        return sb.from("messages").insert({ project_id: projectId, sender_role: role, body: text }).select().single()
+          .then(function (r) {
+            if (r.error) throw r.error;
+            if (optimistic && S.detail && S.detailProjectId === projectId) {
+              var i = S.detail.messages.indexOf(tmp);
+              if (i > -1) S.detail.messages[i] = r.data;
+              repaint();
+            }
+          })
+          .catch(function (e) {
+            tmp.pending = false;
+            tmp.failed = true;
+            if (optimistic && S.detail && S.detailProjectId === projectId) repaint();
+            toast(errText(e));
+          });
+      }
+      function retryMessage(id, projectId, repaint) {
+        if (!S.detail || S.detailProjectId !== projectId) return;
+        var m = null;
+        S.detail.messages.forEach(function (x) { if (x.id === id) m = x; });
+        if (!m || m.pending) return;
+        m.pending = true;
+        m.failed = false;
+        repaint();
+        sb.from("messages").insert({ project_id: projectId, sender_role: m.sender_role, body: m.body }).select().single()
+          .then(function (r) {
+            if (r.error) throw r.error;
+            if (S.detail && S.detailProjectId === projectId) {
+              var i = S.detail.messages.indexOf(m);
+              if (i > -1) S.detail.messages[i] = r.data;
+              repaint();
+            }
+            toast("Message sent.");
+          })
+          .catch(function (e) {
+            m.pending = false;
+            m.failed = true;
+            if (S.detail && S.detailProjectId === projectId) repaint();
+            toast(errText(e));
+          });
+      }
+      function wireMsgActions(container, projectId, repaint) {
+        if (!container) return;
+        Array.prototype.forEach.call(container.querySelectorAll("[data-retry-msg]"), function (b) {
+          b.addEventListener("click", function () { retryMessage(b.getAttribute("data-retry-msg"), projectId, repaint); });
+        });
+        Array.prototype.forEach.call(container.querySelectorAll("[data-discard-msg]"), function (b) {
+          b.addEventListener("click", function () {
+            if (!S.detail) return;
+            var id = b.getAttribute("data-discard-msg");
+            S.detail.messages = S.detail.messages.filter(function (x) { return x.id !== id; });
+            repaint();
+          });
+        });
       }
       function paymentsCard(project, detail, forFounder) {
         var total = Number(project.total_amount || 0);
@@ -1692,6 +1834,18 @@
       function currentProject() {
         for (var i = 0; i < S.projects.length; i++) if (S.projects[i].id === S.selProjectId) return S.projects[i];
         return S.projects.length ? S.projects[0] : null;
+      }
+
+      /* Repaint only the conversation list inside the client view and keep
+         it scrolled to the newest message. Optimistic sends use this, so
+         the rest of the dashboard is never rebuilt or refetched just to
+         show one new message. */
+      function paintClientConv(project, clientName) {
+        var feed = $("clientContent").querySelector(".conv-feed");
+        if (!feed || !S.detail) return;
+        feed.innerHTML = messagesFeed(S.detail.messages, clientName);
+        feed.scrollTop = feed.scrollHeight;
+        wireMsgActions(feed, project.id, function () { paintClientConv(project, clientName); });
       }
 
       function renderClientView() {
@@ -1800,21 +1954,18 @@
         }
         /* The conversation list scrolls inside its card; start it at the
            newest message, like a chat thread. */
-        var convFeed = box.querySelector(".conv-feed");
-        if (convFeed) convFeed.scrollTop = convFeed.scrollHeight;
+        paintClientConv(project, clientName);
         $("clientMsgForm").addEventListener("submit", function (ev) {
           ev.preventDefault();
-          var text = $("clientMsg").value.trim();
+          var input = $("clientMsg");
+          var text = input.value.trim();
           if (!text) return;
-          var btn = ev.target.querySelector("button[type=submit]");
-          btn.disabled = true;
-          sb.from("messages").insert({ project_id: project.id, sender_role: "client", body: text })
-            .then(function (r) {
-              if (r.error) throw r.error;
-              return loadDetail(project.id);
-            })
-            .then(function () { renderClientView(); toast("Message sent to NovaStack."); })
-            .catch(function (e) { btn.disabled = false; toast(errText(e)); });
+          /* Clear the box and show the message in the thread immediately;
+             sendMessage saves it in the background with a "Sending..."
+             marker, so there is nothing to re-click or refresh. */
+          input.value = "";
+          input.focus();
+          sendMessage(project.id, "client", text, function () { paintClientConv(project, clientName); });
         });
       }
 
@@ -2072,20 +2223,40 @@
             /* data-st comes from the DOM, so it is attacker-controllable:
                only the three known statuses may ever be written. */
             if (["pending", "in_progress", "done"].indexOf(st) === -1) return;
-            var patch = { status: st, completed_at: st === "done" ? new Date().toISOString() : null };
-            sb.from("milestones").update(patch).eq("id", id)
+            var ms = null;
+            S.detail.milestones.forEach(function (m) { if (m.id === id) ms = m; });
+            if (!ms || ms.status === st) return;
+            /* Optimistic: the tap lands on screen instantly and only the
+               two writes travel. Before this, one tap waited on a milestone
+               update, a five-table reload, a progress update and a full
+               console refetch before anything visibly changed. A failed
+               write restores the previous state. */
+            var prevStatus = ms.status, prevCompleted = ms.completed_at, prevPct = Number(p.progress || 0);
+            ms.status = st;
+            ms.completed_at = st === "done" ? new Date().toISOString() : null;
+            var newPct = progressFromMilestones(S.detail.milestones);
+            p.progress = newPct;
+            renderStats();
+            renderClientRows();
+            renderManagePanel();
+            sb.from("milestones").update({ status: st, completed_at: ms.completed_at }).eq("id", id)
               .then(function (r) {
                 if (r.error) throw r.error;
-                return loadDetail(p.id);
+                return sb.from("projects").update({ progress: newPct }).eq("id", p.id);
               })
-              .then(function () {
-                var newPct = progressFromMilestones(S.detail.milestones);
-                return sb.from("projects").update({ progress: newPct }).eq("id", p.id)
-                  .then(function (r) { if (r.error) throw r.error; });
+              .then(function (r) {
+                if (r && r.error) throw r.error;
+                toast("Milestone updated for " + c.name + ".");
               })
-              .then(function () { return refreshFounder(); })
-              .then(function () { toast("Milestone updated for " + c.name + "."); })
-              .catch(function (e) { toast(errText(e)); });
+              .catch(function (e) {
+                ms.status = prevStatus;
+                ms.completed_at = prevCompleted;
+                p.progress = prevPct;
+                renderStats();
+                renderClientRows();
+                renderManagePanel();
+                toast(errText(e));
+              });
           });
         });
 
@@ -2097,31 +2268,57 @@
               setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = "Remove"; } }, 3000);
               return;
             }
-            sb.from("milestones").delete().eq("id", b.getAttribute("data-del-ms"))
+            var msId = b.getAttribute("data-del-ms");
+            var msIdx = -1, msRemoved = null;
+            S.detail.milestones.forEach(function (m, i) { if (m.id === msId) { msIdx = i; msRemoved = m; } });
+            if (!msRemoved) return;
+            var prevPctDel = Number(p.progress || 0);
+            S.detail.milestones.splice(msIdx, 1);
+            var newPctDel = progressFromMilestones(S.detail.milestones);
+            p.progress = newPctDel;
+            renderStats();
+            renderClientRows();
+            renderManagePanel();
+            sb.from("milestones").delete().eq("id", msId)
               .then(function (r) {
                 if (r.error) throw r.error;
-                return loadDetail(p.id);
+                return sb.from("projects").update({ progress: newPctDel }).eq("id", p.id);
               })
-              .then(function () {
-                var newPct = progressFromMilestones(S.detail.milestones);
-                return sb.from("projects").update({ progress: newPct }).eq("id", p.id)
-                  .then(function (r) { if (r.error) throw r.error; });
+              .then(function (r) {
+                if (r && r.error) throw r.error;
+                toast("Milestone removed.");
               })
-              .then(function () { return refreshFounder(); })
-              .then(function () { toast("Milestone removed."); })
-              .catch(function (e) { toast(errText(e)); });
+              .catch(function (e) {
+                S.detail.milestones.splice(msIdx, 0, msRemoved);
+                p.progress = prevPctDel;
+                renderStats();
+                renderClientRows();
+                renderManagePanel();
+                toast(errText(e));
+              });
           });
         });
 
         Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-mark-paid]"), function (b) {
           b.addEventListener("click", function () {
-            sb.from("payments").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", b.getAttribute("data-mark-paid"))
+            var pay = null;
+            S.detail.payments.forEach(function (x) { if (x.id === b.getAttribute("data-mark-paid")) pay = x; });
+            if (!pay || pay.status === "paid") return;
+            var prevPayStatus = pay.status, prevPaidAt = pay.paid_at;
+            pay.status = "paid";
+            pay.paid_at = new Date().toISOString();
+            renderManagePanel();
+            sb.from("payments").update({ status: "paid", paid_at: pay.paid_at }).eq("id", pay.id)
               .then(function (r) {
                 if (r.error) throw r.error;
-                return refreshFounder();
+                toast("Payment marked as paid.");
               })
-              .then(function () { toast("Payment marked as paid."); })
-              .catch(function (e) { toast(errText(e)); });
+              .catch(function (e) {
+                pay.status = prevPayStatus;
+                pay.paid_at = prevPaidAt;
+                renderManagePanel();
+                toast(errText(e));
+              });
           });
         });
 
@@ -2133,13 +2330,22 @@
               setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = "Remove"; } }, 3000);
               return;
             }
-            sb.from("deliverables").delete().eq("id", b.getAttribute("data-del-deliverable"))
+            var dlId = b.getAttribute("data-del-deliverable");
+            var dlIdx = -1, dlRemoved = null;
+            S.detail.deliverables.forEach(function (x, i) { if (x.id === dlId) { dlIdx = i; dlRemoved = x; } });
+            if (!dlRemoved) return;
+            S.detail.deliverables.splice(dlIdx, 1);
+            renderManagePanel();
+            sb.from("deliverables").delete().eq("id", dlId)
               .then(function (r) {
                 if (r.error) throw r.error;
-                return refreshFounder();
+                toast("Deliverable removed.");
               })
-              .then(function () { toast("Deliverable removed."); })
-              .catch(function (e) { toast(errText(e)); });
+              .catch(function (e) {
+                S.detail.deliverables.splice(dlIdx, 0, dlRemoved);
+                renderManagePanel();
+                toast(errText(e));
+              });
           });
         });
 
@@ -2160,13 +2366,34 @@
             currency: validCurrency($("setCurrency").value)
           };
           if (!patch.title) return;
+          /* Apply locally first so the panel, stats and client rows update
+             instantly; only the single write travels. A failed write puts
+             the previous values back (the server still holds them). */
+          var prevSettings = { title: p.title, status: p.status, progress: p.progress, total_amount: p.total_amount, currency: p.currency };
+          p.title = patch.title;
+          p.status = patch.status;
+          p.progress = patch.progress;
+          p.total_amount = patch.total_amount;
+          p.currency = patch.currency;
+          renderStats();
+          renderClientRows();
+          renderManagePanel();
           sb.from("projects").update(patch).eq("id", p.id)
             .then(function (r) {
               if (r.error) throw r.error;
-              return refreshFounder();
+              toast("Project settings saved.");
             })
-            .then(function () { toast("Project settings saved."); })
-            .catch(function (e) { toast(errText(e)); });
+            .catch(function (e) {
+              p.title = prevSettings.title;
+              p.status = prevSettings.status;
+              p.progress = prevSettings.progress;
+              p.total_amount = prevSettings.total_amount;
+              p.currency = prevSettings.currency;
+              renderStats();
+              renderClientRows();
+              renderManagePanel();
+              toast(errText(e));
+            });
         });
 
         $("addMsForm").addEventListener("submit", function (ev) {
@@ -2174,12 +2401,15 @@
           var title = $("msTitle").value.trim();
           if (!title) return;
           var nextOrder = S.detail.milestones.reduce(function (mx, m) { return Math.max(mx, m.sort_order || 0); }, 0) + 1;
-          sb.from("milestones").insert({ project_id: p.id, title: title, status: "pending", sort_order: nextOrder })
+          sb.from("milestones").insert({ project_id: p.id, title: title, status: "pending", sort_order: nextOrder }).select().single()
             .then(function (r) {
               if (r.error) throw r.error;
-              return refreshFounder();
+              /* The inserted row returns with the write, so the list
+                 updates locally instead of refetching the whole console. */
+              if (S.detail && S.detailProjectId === p.id) S.detail.milestones.push(r.data);
+              renderManagePanel();
+              toast("Milestone added.");
             })
-            .then(function () { toast("Milestone added."); })
             .catch(function (e) { toast(errText(e)); });
         });
 
@@ -2188,12 +2418,13 @@
           var title = $("updTitle").value.trim();
           var body = $("updBody").value.trim();
           if (!title) return;
-          sb.from("updates").insert({ project_id: p.id, author_role: "founder", title: title, body: body || null })
+          sb.from("updates").insert({ project_id: p.id, author_role: "founder", title: title, body: body || null }).select().single()
             .then(function (r) {
               if (r.error) throw r.error;
-              return refreshFounder();
+              if (S.detail && S.detailProjectId === p.id) S.detail.updates.unshift(r.data);
+              ev.target.reset();
+              toast("Update posted. The client can see it now.");
             })
-            .then(function () { toast("Update posted. The client can see it now."); })
             .catch(function (e) { toast(errText(e)); });
         });
 
@@ -2213,12 +2444,13 @@
             status: st,
             paid_at: st === "paid" ? new Date().toISOString() : null,
             note: $("payNote").value.trim().slice(0, 300) || null
-          })
+          }).select().single()
             .then(function (r) {
               if (r.error) throw r.error;
-              return refreshFounder();
+              if (S.detail && S.detailProjectId === p.id) S.detail.payments.unshift(r.data);
+              renderManagePanel();
+              toast("Payment of " + money(amt, p.currency) + " recorded for " + c.name + ".");
             })
-            .then(function () { toast("Payment of " + money(amt, p.currency) + " recorded for " + c.name + "."); })
             .catch(function (e) { toast(errText(e)); });
         });
 
@@ -2231,27 +2463,30 @@
             title: title,
             kind: $("dlKind").value,
             url: $("dlUrl").value.trim() || null
-          })
+          }).select().single()
             .then(function (r) {
               if (r.error) throw r.error;
-              return refreshFounder();
+              if (S.detail && S.detailProjectId === p.id) S.detail.deliverables.unshift(r.data);
+              renderManagePanel();
+              toast("Deliverable added for " + c.name + ".");
             })
-            .then(function () { toast("Deliverable added for " + c.name + "."); })
             .catch(function (e) { toast(errText(e)); });
         });
 
         $("founderMsgForm").addEventListener("submit", function (ev) {
           ev.preventDefault();
-          var text = $("founderMsg").value.trim();
+          var input = $("founderMsg");
+          var text = input.value.trim();
           if (!text) return;
-          sb.from("messages").insert({ project_id: p.id, sender_role: "founder", body: text })
-            .then(function (r) {
-              if (r.error) throw r.error;
-              return refreshFounder();
-            })
-            .then(function () { toast("Reply sent."); })
-            .catch(function (e) { toast(errText(e)); });
+          /* Same optimistic send as the client side: the reply appears in
+             the thread and the box clears the moment Send is pressed;
+             sendMessage saves it in the background. */
+          input.value = "";
+          sendMessage(p.id, "founder", text, function () { renderManagePanel(); });
         });
+
+        /* Retry / Remove actions for any message that failed to send. */
+        wireMsgActions($("managePanel"), p.id, function () { renderManagePanel(); });
       }
 
       function createProject(client, title, service, total, currency) {
