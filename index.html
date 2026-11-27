@@ -596,6 +596,109 @@
         .card { padding: 18px 16px; }
         .auth-form-card { padding: 22px 16px 18px; }
       }
+
+      /* ================================================================
+         Founder console v3 — compact tabbed workspace.
+         One view at a time (Overview / Add client / Access tests) so
+         the page never becomes one endless scroll. The project manage
+         panel gets its own inner tabs for the same reason.
+         ================================================================ */
+      .wrap { padding-top: 16px; padding-bottom: 40px; }
+      .controlbar { margin-bottom: 16px; top: 10px; }
+
+      #founderView { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 16px; align-items: start; }
+      #founderView > .stats, #founderView > .founder-grid, #founderView > .card { grid-column: auto; }
+      .founder-main { min-width: 0; display: grid; gap: 16px; align-content: start; }
+      .founder-tab-panel { display: grid; gap: 16px; align-content: start; min-width: 0; }
+      .founder-tab-panel[hidden] { display: none !important; }
+
+      .founder-side { grid-column: 1; grid-row: auto; top: 76px; padding: 16px 12px 12px; }
+      .side-nav { gap: 4px; margin-top: 12px; }
+      .side-nav button {
+        display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+        background: transparent; border: 0; cursor: pointer;
+        color: var(--side-muted); font-weight: 700; font-size: 14px;
+        padding: 10px 10px; border-radius: 10px; min-height: 42px;
+        transition: background .15s ease, color .15s ease;
+      }
+      .side-nav button svg { flex: 0 0 auto; opacity: .85; }
+      .side-nav button:hover { background: var(--side-bg-2); color: var(--side-ink); }
+      .side-nav button.active { background: var(--brand); color: #fff; }
+      .side-nav button.active svg { opacity: 1; }
+      .side-nav .nav-badge {
+        margin-left: auto; font-size: 11px; font-weight: 800; line-height: 1;
+        background: var(--side-bg-2); color: var(--side-muted);
+        border: 1px solid var(--side-line); border-radius: 999px; padding: 4px 7px;
+      }
+      .side-nav button.active .nav-badge { background: rgba(255,255,255,.18); color: #fff; border-color: transparent; }
+
+      /* compact KPI strip */
+      .stats { grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 0; }
+      .stat { padding: 14px 16px; display: flex; align-items: center; gap: 13px; }
+      .stat .ic { width: 40px; height: 40px; border-radius: 11px; margin-bottom: 0; flex: 0 0 auto; }
+      .stat .txt { min-width: 0; }
+      .stat .k { font-size: 11px; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .stat .v { font-size: 22px; margin-top: 1px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .stat .s { font-size: 12px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      /* two-column workspace: clients list scrolls internally */
+      .founder-grid { grid-template-columns: 348px minmax(0, 1fr); gap: 16px; }
+      #clientsCard { padding: 18px; }
+      #clientRows { max-height: 560px; overflow-y: auto; padding-right: 2px; scrollbar-width: thin; }
+      .client-row { padding: 11px 12px; margin-top: 8px; }
+      #managePanel { padding: 20px; min-height: 420px; }
+
+      /* manage panel inner tabs */
+      .manage-tabs {
+        display: flex; gap: 4px; flex-wrap: wrap;
+        background: var(--card-2); border: 1px solid var(--line);
+        border-radius: 11px; padding: 4px; margin: 16px 0 4px;
+      }
+      .manage-tabs button {
+        flex: 1 1 auto; border: 0; background: transparent; cursor: pointer;
+        border-radius: 8px; padding: 8px 10px; min-height: 38px;
+        font-size: 13.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap;
+      }
+      .manage-tabs button.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+      .manage-section[hidden] { display: none !important; }
+      .manage-section .divider:first-child { display: none; }
+      #managePanel .divider { margin: 18px 0; }
+      #managePanel .card { box-shadow: none; padding: 0; border: 0; border-radius: 0; background: transparent; }
+      #managePanel .card h3 { font-size: 16.5px; }
+
+      /* add-client + tests panels: readable width, not full-bleed */
+      #panelAdd .card, #panelTests .card { max-width: 760px; }
+      #panelAdd .card { padding: 22px; }
+      .acl-notes { margin-top: 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--card-2); }
+      .acl-notes summary { cursor: pointer; font-weight: 700; font-size: 14px; padding: 13px 16px; min-height: 44px; }
+      .acl-notes .acl-notes-body { padding: 2px 16px 16px; display: grid; gap: 14px; }
+      .acl-notes h4 { margin: 0 0 3px; font-size: 13.5px; }
+      .acl-notes p { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+      .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .page-head h2 { font-size: 20px; font-weight: 800; letter-spacing: -.015em; }
+      .page-head p { color: var(--muted); font-size: 13.5px; font-weight: 600; margin-top: 2px; }
+
+      @media (max-width: 1080px) {
+        #founderView { grid-template-columns: 1fr; }
+        .founder-side { position: static; }
+        .side-nav { display: flex; flex-wrap: wrap; }
+        .side-nav button { width: auto; flex: 1 1 auto; justify-content: center; }
+        .side-nav .nav-badge { margin-left: 2px; }
+        #clientRows { max-height: 420px; }
+      }
+      @media (max-width: 900px) {
+        .founder-grid { grid-template-columns: 1fr; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+      }
+      @media (max-width: 520px) {
+        .stats { grid-template-columns: 1fr 1fr; gap: 9px; }
+        .stat { padding: 12px; gap: 10px; }
+        .stat .ic { width: 34px; height: 34px; }
+        .stat .v { font-size: 19px; }
+        .manage-tabs button { flex: 1 1 40%; }
+        #managePanel, #clientsCard { padding: 16px; }
+      }
     </style>
   </head>
   <body>
@@ -724,10 +827,9 @@
               <div class="bt"><strong>NovaStack</strong><span>Founder Console</span></div>
             </div>
             <nav class="side-nav" aria-label="Founder console sections">
-              <a href="#statsRow"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</a>
-              <a href="#clientsCard"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
-              <a href="#addClientCard"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Add a client</a>
-              <a href="#aclCard"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Access tests</a>
+              <button type="button" data-ftab="overview" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
+              <button type="button" data-ftab="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Add a client</button>
+              <button type="button" data-ftab="tests"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Access tests<span class="nav-badge">12 checks</span></button>
             </nav>
             <div class="side-foot">
               NovaStack client operations.<br />
@@ -735,9 +837,14 @@
               +92 339 3887766
             </div>
           </aside>
+          <div class="founder-main">
+          <div class="founder-tab-panel" id="panelOverview">
+          <div class="page-head">
+            <div><h2>Overview</h2><p>Clients, projects and payments at a glance.</p></div>
+          </div>
           <div class="stats" id="statsRow"></div>
           <div class="founder-grid">
-            <div class="stack">
+            <div>
               <div class="card" id="clientsCard">
                 <div class="card-head">
                   <div>
@@ -750,10 +857,17 @@
                 <ul class="client-rows" id="clientRows"></ul>
                 <p class="empty" id="noClients" hidden>No clients match this search.</p>
               </div>
+            </div>
 
+            <div class="card" id="managePanel"></div>
+          </div>
+          </div>
+
+          <div class="founder-tab-panel" id="panelAdd" hidden>
+          <div class="page-head"><div><h2>Add a client</h2><p>The client sees the project when they sign in with this email.</p></div></div>
               <div class="card" id="addClientCard">
-                <h3>Add a client</h3>
-                <p class="sub">Creates the client, their first project and a standard milestone plan. The client sees the project when they sign in with this email.</p>
+                <h3>Client &amp; first project</h3>
+                <p class="sub">Creates the client, their first project and a standard milestone plan.</p>
                 <form id="addClientForm" class="form-grid" style="margin-top:14px">
                   <div>
                     <label class="field" for="ncName">Client or business name</label>
@@ -798,29 +912,32 @@
                   <button type="submit" class="btn">Add client and project</button>
                 </form>
               </div>
-            </div>
-
-            <div class="card" id="managePanel"></div>
           </div>
 
-          <div class="card" id="aclCard" style="margin-top:16px">
+          <div class="founder-tab-panel" id="panelTests" hidden>
+          <div class="page-head">
+            <div><h2>Access tests</h2><p>Live checks that an outsider with only the public key can read nothing and write nothing.</p></div>
+            <button type="button" class="btn" id="runAclBtn">Run tests</button>
+          </div>
+          <div class="card" id="aclCard">
             <div class="card-head">
               <div>
                 <h3>Access control tests</h3>
-                <p class="sub">Regression checks for broken access control, run live against the backend. Requests are made with only the public key and no sign-in, the way an attacker would: every read must come back empty and every write must be rejected. Real enforcement is server-side (Supabase Row Level Security, deny-by-default: no policy means no access). Run these after any schema or policy change.</p>
+                <p class="sub">12 checks, run live against the backend with no sign-in — every read must come back empty and every write rejected. Enforcement is server-side (Supabase RLS, deny-by-default). Run after any schema or policy change.</p>
               </div>
-              <button type="button" class="btn ghost small" id="runAclBtn">Run tests</button>
             </div>
-            <div id="aclResults"><p class="empty">Not run yet in this session.</p></div>
-            <hr class="divider" />
-            <h3 style="font-size:14.5px">One setting to keep on</h3>
-            <p class="sub" style="margin-top:4px">Client accounts are linked to their project by email address. In Supabase, keep Authentication &rarr; Sign In / Providers &rarr; <strong>Confirm email</strong> switched on, so nobody can register a client's email address before the client does and claim their project view.</p>
-            <h3 style="font-size:14.5px;margin-top:18px">Password recovery (forgot password)</h3>
-            <p class="sub" style="margin-top:4px">Any user — client or founder — who forgets their password uses <strong>Forgot password?</strong> on the sign-in screen. Supabase Auth emails a single-use, short-lived reset link; opening it lands on this dashboard's <strong>Set a new password</strong> screen, where the user chooses a new password with <code>updateUser</code>. No password is ever stored or seen by NovaStack, and this page never handles the old password. For the email link to land here, keep Supabase Authentication &rarr; URL Configuration &rarr; <strong>Site URL</strong> set to <strong>https://dashboard.novastackltd.com/</strong> and that same URL in <strong>Redirect URLs</strong> (both already set). If a client says the link expired, tell them to request a fresh one — old links cannot be reused.</p>
-            <h3 style="font-size:14.5px;margin-top:18px">PKR and USDT projects</h3>
-            <p class="sub" style="margin-top:4px">When you add a client or create a project, choose <strong>PKR</strong> for local clients or <strong>USDT</strong> for international clients. The whole project — value, paid, remaining and every payment row — is then shown in that currency, and the founder stats keep PKR and USDT totals separate (they are never added together or converted). Payment methods now include <strong>USDT (TRC20)</strong> and <strong>USDT (ERC20)</strong> alongside bank transfer, JazzCash and EasyPaisa. You can also switch an existing project's currency in Project settings — do it before recording payments, because amounts are not converted automatically.</p>
-            <h3 style="font-size:14.5px;margin-top:18px">Production settings outside this page</h3>
-            <p class="sub" style="margin-top:4px">Login sessions, token signing, expiry and refresh rotation are handled by Supabase Auth, and this page sets no cookies of its own; keep the default session settings in Supabase Authentication as they are. On Hostinger, keep HTTPS forced on for this subdomain; response headers such as Strict-Transport-Security and X-Content-Type-Options are sent by the host, not by this file, so check them there. In the GitHub repo, turn on Dependabot alerts and secret scanning with push protection (Settings, Code security) so a vulnerable library version or a leaked key is flagged automatically. The sign-in library on this page is pinned to one exact version, so it can never change silently; update it deliberately, one version at a time.</p>
+            <div id="aclResults"><p class="empty">Not run yet in this session. Press <strong>Run tests</strong> above.</p></div>
+            <details class="acl-notes">
+              <summary>Notes &amp; settings to keep</summary>
+              <div class="acl-notes-body">
+                <div><h4>Confirm email — keep on</h4><p>Client accounts link to their project by email. In Supabase keep Authentication → Sign In / Providers → <strong>Confirm email</strong> on, so nobody can register a client's email first and claim their project view.</p></div>
+                <div><h4>Password recovery</h4><p>Users reset via <strong>Forgot password?</strong> on the sign-in screen; Supabase emails a single-use, short-lived link that lands on this dashboard's <strong>Set a new password</strong> screen. Keep the Supabase <strong>Site URL</strong> and <strong>Redirect URLs</strong> set to https://dashboard.novastackltd.com/ (already set). Expired links cannot be reused — the client should request a fresh one.</p></div>
+                <div><h4>PKR and USDT projects</h4><p>Choose PKR for local clients or USDT for international clients when adding a client or creating a project. The whole project is shown in that currency, and founder stats keep PKR and USDT totals separate — never added together or converted. Currency can be switched in Project settings, before recording payments.</p></div>
+                <div><h4>Production settings outside this page</h4><p>Sessions, token signing, expiry and refresh rotation are handled by Supabase Auth; this page sets no cookies. On Hostinger keep HTTPS forced on; security headers are sent by the host. In GitHub, keep Dependabot alerts and secret scanning with push protection on. The sign-in library is pinned to one exact version and only updated deliberately.</p></div>
+              </div>
+            </details>
+          </div>
+          </div>
           </div>
         </section>
       </div>
@@ -881,7 +998,9 @@
         selClientId: null,
         selProjectId: null,
         filter: "All",
-        search: ""
+        search: "",
+        manageTab: "project",
+        founderTab: "overview"
       };
 
       /* ---------- helpers ---------- */
@@ -1518,10 +1637,10 @@
         if (usdtTotal > 0) valueParts.push(money(usdtTotal, "USDT"));
         var valueSub = usdtTotal > 0 && pkrTotal > 0 ? "PKR and USDT projects, shown separately — never added together" : usdtTotal > 0 ? "across all USDT projects" : "across all projects";
         $("statsRow").innerHTML =
-          '<div class="card stat"><span class="ic brand"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><p class="k">Total clients</p><p class="v">' + S.clients.length + '</p><p class="s">' + S.projects.length + " projects</p></div>" +
-          '<div class="card stat"><span class="ic green"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><p class="k">Active projects</p><p class="v">' + active + '</p><p class="s">not yet completed</p></div>' +
-          '<div class="card stat"><span class="ic amber"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><p class="k">Waiting on client</p><p class="v">' + waiting + '</p><p class="s">projects need client input</p></div>' +
-          '<div class="card stat"><span class="ic ink"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><p class="k">Project value</p><p class="v" style="font-size:' + (valueParts.length > 1 ? "19px" : "27px") + '">' + esc(valueParts.join("  ·  ")) + '</p><p class="s">' + esc(valueSub) + "</p></div>";
+          '<div class="card stat"><span class="ic brand"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="txt"><p class="k">Total clients</p><p class="v">' + S.clients.length + '</p><p class="s">' + S.projects.length + " projects</p></span></div>" +
+          '<div class="card stat"><span class="ic green"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><span class="txt"><p class="k">Active projects</p><p class="v">' + active + '</p><p class="s">not yet completed</p></span></div>' +
+          '<div class="card stat"><span class="ic amber"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><span class="txt"><p class="k">Waiting on client</p><p class="v">' + waiting + '</p><p class="s">projects need client input</p></span></div>' +
+          '<div class="card stat"><span class="ic ink"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="txt"><p class="k">Project value</p><p class="v" style="font-size:' + (valueParts.length > 1 ? "17px" : "22px") + '">' + esc(valueParts.join("  ·  ")) + '</p><p class="s">' + esc(valueSub) + "</p></span></div>";
       }
 
       var FILTERS = [
@@ -1659,7 +1778,15 @@
           '<div style="margin-top:16px"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700"><span>Overall progress</span><span>' + pct + '%</span></div>' +
           '<div class="bar" style="margin-top:7px"><div style="width:' + pct + '%" class="' + (pct >= 100 ? "full" : "") + '"></div></div></div>' +
 
-          '<hr class="divider" /><h3>Project settings</h3>' +
+          '<div class="manage-tabs" role="tablist" aria-label="Project sections">' +
+            '<button type="button" data-mtab="project" class="active" role="tab" aria-selected="true">Project</button>' +
+            '<button type="button" data-mtab="updates" role="tab" aria-selected="false">Updates</button>' +
+            '<button type="button" data-mtab="payments" role="tab" aria-selected="false">Payments &amp; files</button>' +
+            '<button type="button" data-mtab="messages" role="tab" aria-selected="false">Messages</button>' +
+          '</div>' +
+
+          '<div class="manage-section" data-msec="project">' +
+          '<h3 style="margin-top:14px">Project settings</h3>' +
           '<form id="settingsForm" class="form-grid" style="margin-top:10px">' +
             '<div><label class="field" for="setTitle">Project title</label><input type="text" id="setTitle" required maxlength="200" value="' + esc(p.title) + '" /></div>' +
             '<div class="form-2col">' +
@@ -1678,14 +1805,18 @@
           '<form id="addMsForm" class="form-row" style="margin-top:12px"><div><label class="field" for="msTitle">Add a milestone</label>' +
           '<input type="text" id="msTitle" maxlength="200" placeholder="e.g. Client review round" required /></div>' +
           '<button type="submit" class="btn ghost">Add</button></form>' +
+          '</div>' +
 
-          '<hr class="divider" /><h3>Post an update</h3><p class="sub">Appears at the top of the client\'s updates feed.</p>' +
+          '<div class="manage-section" data-msec="updates" hidden>' +
+          '<h3 style="margin-top:14px">Post an update</h3><p class="sub">Appears at the top of the client\'s updates feed.</p>' +
           '<form id="updateForm" class="form-grid" style="margin-top:10px">' +
           '<div><label class="field" for="updTitle">Title</label><input type="text" id="updTitle" required maxlength="200" placeholder="e.g. Development started" /></div>' +
           '<div><label class="field" for="updBody">Details (optional)</label><textarea id="updBody" maxlength="5000" placeholder="What was done, what is next..."></textarea></div>' +
           '<div><button type="submit" class="btn">Post update</button></div></form>' +
+          '</div>' +
 
-          '<hr class="divider" /><h3>Payments</h3>' +
+          '<div class="manage-section" data-msec="payments" hidden>' +
+          '<h3 style="margin-top:14px">Payments</h3>' +
           paymentsCard(p, d, true) +
           '<form id="payForm" class="form-grid" style="margin-top:14px">' +
             '<div class="form-2col">' +
@@ -1708,16 +1839,41 @@
             "</div>" +
             '<div><button type="submit" class="btn ghost">Add deliverable</button></div></form>' +
 
-          '<hr class="divider" /><h3>Conversation</h3>' +
+          '</div>' +
+
+          '<div class="manage-section" data-msec="messages" hidden>' +
+          '<h3 style="margin-top:14px">Conversation</h3>' +
           messagesFeed(d.messages, c.name) +
           '<form id="founderMsgForm" style="margin-top:12px"><label class="field" for="founderMsg">Reply to ' + esc(c.name) + '</label>' +
           '<textarea id="founderMsg" maxlength="5000" placeholder="Write a reply..." required></textarea>' +
-          '<div style="margin-top:10px"><button type="submit" class="btn ghost">Send reply</button></div></form>';
+          '<div style="margin-top:10px"><button type="submit" class="btn ghost">Send reply</button></div></form>' +
+          '</div>';
 
         wireManagePanel(c, p);
       }
 
       function wireManagePanel(c, p) {
+        /* Inner tabs: one project section at a time, so the manage panel
+           stays a compact workspace instead of one endless scroll. The
+           active tab is remembered per client selection in memory only. */
+        var tabBtns = $("managePanel").querySelectorAll("[data-mtab]");
+        var sections = $("managePanel").querySelectorAll("[data-msec]");
+        function showManageTab(key) {
+          Array.prototype.forEach.call(tabBtns, function (b) {
+            var on = b.getAttribute("data-mtab") === key;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          Array.prototype.forEach.call(sections, function (s) {
+            s.hidden = s.getAttribute("data-msec") !== key;
+          });
+          S.manageTab = key;
+        }
+        Array.prototype.forEach.call(tabBtns, function (b) {
+          b.addEventListener("click", function () { showManageTab(b.getAttribute("data-mtab")); });
+        });
+        if (tabBtns.length) showManageTab(S.manageTab || "project");
+
         Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-ms]"), function (b) {
           b.addEventListener("click", function () {
             var id = b.getAttribute("data-ms");
@@ -1953,9 +2109,29 @@
         renderFilters();
         renderClientRows();
         renderManagePanel();
+        setFounderTab(S.founderTab || "overview", true);
       }
 
       /* ---------- founder wiring ---------- */
+      /* Sidebar tabs: exactly one founder view is visible at a time —
+         Overview, Add a client, or Access tests — so the founder page
+         is a compact workspace, not one long scroll with the tests
+         buried at the bottom. */
+      function setFounderTab(key, noScroll) {
+        if (["overview", "add", "tests"].indexOf(key) === -1) key = "overview";
+        S.founderTab = key;
+        $("panelOverview").hidden = key !== "overview";
+        $("panelAdd").hidden = key !== "add";
+        $("panelTests").hidden = key !== "tests";
+        Array.prototype.forEach.call(document.querySelectorAll("[data-ftab]"), function (b) {
+          b.classList.toggle("active", b.getAttribute("data-ftab") === key);
+        });
+        if (!noScroll) window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      Array.prototype.forEach.call(document.querySelectorAll("[data-ftab]"), function (b) {
+        b.addEventListener("click", function () { setFounderTab(b.getAttribute("data-ftab")); });
+      });
+
       $("clientSearch").addEventListener("input", function () {
         S.search = this.value;
         renderClientRows();
@@ -1997,6 +2173,7 @@
             $("clientSearch").value = "";
             renderFilters();
             renderClientRows();
+            setFounderTab("overview");
             toast(name + " added. They can now sign in with " + email + " to see the project.");
           })
           .catch(function (e) {
@@ -2193,6 +2370,8 @@
             S.selProjectId = null;
             S.filter = "All";
             S.search = "";
+            S.manageTab = "project";
+            S.founderTab = "overview";
             inRecovery = false;
             looksLikeRecovery = false;
             setAuthMode("signin");
