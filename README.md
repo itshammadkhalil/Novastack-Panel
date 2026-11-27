@@ -128,6 +128,6 @@ Then open http://localhost:8000.
 
 ## Notes
 
-- All amounts are stored in PKR unless a project says otherwise.
+- Each project has a currency, PKR or USDT, chosen by the founder. Amounts are recorded and shown in the project's currency. The founder sends any USDT wallet address to the client by message; no wallet address is stored in the dashboard.
 - A client account is linked to its project by email. If a client signs up with a different email, they will see a "no project linked yet" screen until the founder adds a client record with that email.
 - Email confirmation follows the Supabase Auth settings for the project.
