@@ -898,6 +898,30 @@
       .conv-feed .feed li:first-child { padding-top: 2px; }
 
       /* ================================================================
+         Conversation growth fix — a capped feed alone was not enough:
+         on the client side the Conversation card still grew with the
+         thread (from near-empty up to the cap) and pushed the page
+         around, and the founder console's Messages feed had no bound
+         at all, so every new message stretched that section and pushed
+         the reply form further down the panel. Both conversation
+         surfaces are now fixed-size chat windows: the card / section
+         keeps one height no matter how long the thread gets, the
+         messages scroll inside it, and the reply form stays pinned
+         directly underneath, always in the same place.
+         ================================================================ */
+      #convCard { display: flex; flex-direction: column; height: 600px; }
+      #convCard .conv-feed { flex: 1 1 auto; min-height: 0; max-height: none; }
+      @media (max-width: 520px) {
+        #convCard { height: 540px; }
+      }
+      .founder-conv-feed {
+        max-height: 400px; overflow-y: auto; scrollbar-width: thin;
+        overscroll-behavior: contain; padding-right: 2px;
+      }
+      .founder-conv-feed .feed { margin-top: 0; }
+      .founder-conv-feed .feed li:first-child { padding-top: 2px; }
+
+      /* ================================================================
          Speed pass — the loading card gets a spinner so a slow network
          reads as "working", not "stuck".
          ================================================================ */
@@ -2022,6 +2046,9 @@
         if (!feed) return;
         var c = clientOf(S.selClientId);
         feed.innerHTML = messagesFeed(S.detail.messages, c ? c.name : "Client");
+        /* The feed is a bounded scroll window now: keep it pinned to the
+           newest message, like the client side does. */
+        feed.scrollTop = feed.scrollHeight;
         wireMsgActions(feed, S.detailProjectId, paintFounderConv);
       }
 
@@ -2396,7 +2423,13 @@
           S.manageTab = key;
           /* Opening the Messages section means the founder is reading
              this conversation now, so its unread badge clears. */
-          if (key === "messages") clearUnread(p.id);
+          if (key === "messages") {
+            clearUnread(p.id);
+            /* Land on the newest message, not the top of the thread:
+               the feed scrolls inside its own bounded window. */
+            var ff = $("managePanel").querySelector(".founder-conv-feed");
+            if (ff) ff.scrollTop = ff.scrollHeight;
+          }
         }
         Array.prototype.forEach.call(tabBtns, function (b) {
           b.addEventListener("click", function () { showManageTab(b.getAttribute("data-mtab")); });
