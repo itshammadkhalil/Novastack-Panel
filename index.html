@@ -810,6 +810,47 @@
       @media (max-width: 640px) {
         .ms-edit .status-btns { margin-left: 0; }
       }
+
+      /* ================================================================
+         Founder console v6 — structural fix, not another density pass.
+         Two things read as "the old version came back" in the live
+         screenshots: (1) the sidebar lost the NovaStack brand lockup
+         the premium redesign shipped with (restored in the markup —
+         the .side-brand rules above are used again), and (2) the
+         Overview was still one long scrolling page: the manage panel
+         ran far past the fold while the sidebar and clients card
+         ended early, leaving a tall black void on the left.
+         On desktop the console is now a fixed-height workspace that
+         fills the screen under the app bar: the page itself does not
+         scroll, the clients list and the manage panel are equal
+         height and scroll inside their own cards, and both columns
+         end on the same bottom edge. Below desktop width the layout
+         keeps its natural stacked flow.
+         ================================================================ */
+      @media (min-width: 1081px) {
+        #founderView {
+          height: calc(100vh - 132px);
+          height: calc(100dvh - 132px);
+          min-height: 560px;
+          grid-template-rows: minmax(0, 1fr);
+          align-items: stretch;
+        }
+        .founder-side { align-self: start; position: sticky; top: 92px; height: auto; }
+        .side-foot { margin-top: 18px; }
+
+        .founder-main { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+        .founder-tab-panel { flex: 1 1 auto; min-height: 0; }
+        #panelAdd, #panelTests { overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+
+        /* Overview: heading and KPI strip stay put, the workspace
+           below them takes all remaining height */
+        #panelOverview { display: flex; flex-direction: column; overflow: hidden; }
+        #panelOverview .founder-grid { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+        .founder-grid > div:first-child { position: static; display: flex; min-height: 0; }
+        #clientsCard { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; width: 100%; }
+        #clientRows { flex: 1 1 auto; min-height: 0; max-height: none; }
+        #managePanel { height: 100%; max-height: 100%; min-height: 0; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+      }
     </style>
   </head>
   <body>
@@ -933,7 +974,10 @@
         <!-- ================= FOUNDER VIEW ================= -->
         <section id="founderView" aria-label="Founder dashboard" hidden>
           <aside class="founder-side">
-            <p class="side-label">Founder Console</p>
+            <div class="side-brand">
+              <svg class="logo-mark" width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1b222b"/><path d="M32 9 55 32 32 55 9 32Z" fill="none" stroke="#f0732f" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 18.5 45.5 32 32 45.5 18.5 32Z" fill="none" stroke="#43b06e" stroke-width="3" stroke-linejoin="round"/><path d="M32 25.5 38.5 32 32 38.5 25.5 32Z" fill="#f0732f"/></svg>
+              <div class="bt"><strong>NovaStack</strong><span>Founder Console</span></div>
+            </div>
             <nav class="side-nav" aria-label="Founder console sections">
               <button type="button" data-ftab="overview" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
               <button type="button" data-ftab="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Add a client</button>
