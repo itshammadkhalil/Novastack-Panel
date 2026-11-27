@@ -740,6 +740,76 @@
         .founder-side { height: auto; }
         .side-foot { margin-top: 18px; }
       }
+
+      /* ================================================================
+         Founder console v5 — density pass from the second screenshot
+         review: the full-height sidebar rail left a tall empty void
+         under three short nav items, and every milestone took two
+         stacked lines (name row, then status pills), which made the
+         Project tab scroll forever. The rail now hugs its content,
+         milestones sit on one compact line, and the manage panel's
+         forms and lists are tightened throughout.
+         ================================================================ */
+
+      /* sidebar: fit the content, no empty rail stretching to the
+         bottom of the screen with the footer stranded far below */
+      .founder-side { height: auto; }
+      .side-foot { margin-top: 18px; }
+
+      /* milestones: one line per step — name, quiet remove action,
+         then the status segmented control pushed to the right */
+      .ms-edit li {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        padding: 8px 0;
+      }
+      .ms-edit .row { flex: 0 1 auto; justify-content: flex-start; gap: 10px; min-width: 0; }
+      .ms-edit .nm { font-size: 14.5px; overflow-wrap: anywhere; }
+      .ms-edit .row .btn.danger.small {
+        min-height: 28px; padding: 3px 9px; font-size: 12px; border-radius: 7px;
+        background: transparent; border-color: transparent; font-weight: 700;
+      }
+      .ms-edit .row .btn.danger.small:hover { background: var(--red-soft); border-color: var(--line); }
+      .ms-edit .status-btns { margin: 0 0 0 auto; padding: 2px; }
+      .ms-edit .status-btns button { min-height: 29px; padding: 4px 10px; font-size: 12px; }
+
+      /* manage panel: tighter forms, lists and dividers */
+      #managePanel { padding: 18px; min-height: 0; }
+      #managePanel input[type="text"], #managePanel input[type="number"],
+      #managePanel input[type="url"], #managePanel select, #managePanel textarea {
+        min-height: 40px; padding: 8px 11px;
+      }
+      #managePanel textarea { min-height: 64px; }
+      #managePanel .form-grid { gap: 10px; }
+      #managePanel .form-2col { gap: 10px; }
+      #managePanel .divider { margin: 14px 0; }
+      .manage-tabs { margin: 12px 0 2px; }
+      .manage-tabs button { min-height: 34px; padding: 6px 10px; }
+      .manage-section > h3, .manage-section .card h3 { margin-top: 10px; }
+      .manage-section > .card:first-child { margin-top: 10px; }
+      #managePanel .pay-nums { margin: 4px 0 10px; }
+      #managePanel .inv-list li { padding: 7px 0; }
+      #managePanel .dl-list li { padding: 8px 0; }
+      #managePanel .feed li { padding: 9px 0; }
+
+      /* clients column: tighter search, filters and rows so the card
+         ends near its content instead of trailing off */
+      #clientsCard { padding: 16px; }
+      #clientsCard .card-head { margin-bottom: 10px; }
+      .filters { gap: 6px; margin: 10px 0 2px; }
+      .filters button { min-height: 32px; padding: 5px 11px; font-size: 12.5px; }
+      #clientRows { max-height: 480px; }
+      .client-row { padding: 10px 12px; margin-top: 7px; }
+      .client-row .mini-bar { margin-top: 8px; }
+
+      /* KPI strip and page head: slightly tighter so the workspace
+         starts higher and fits more above the fold */
+      .page-head h2 { font-size: 19px; }
+      .stats { gap: 10px; }
+      .stat { padding: 12px 14px; }
+
+      @media (max-width: 640px) {
+        .ms-edit .status-btns { margin-left: 0; }
+      }
     </style>
   </head>
   <body>
