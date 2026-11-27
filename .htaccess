@@ -1,0 +1,13 @@
+# NovaStack Panel — security headers (Hostinger Apache)
+# No routing rules here: the dashboard is a single page, so no SPA
+# fallback is needed. These headers only harden responses.
+<IfModule mod_headers.c>
+  # Stop browsers from MIME-sniffing responses into executable content.
+  Header set X-Content-Type-Options "nosniff"
+  # Never allow the dashboard to be framed by another site.
+  Header set X-Frame-Options "DENY"
+  # Send only the origin (not the full URL) to other sites.
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Block powerful browser features this page never uses.
+  Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
