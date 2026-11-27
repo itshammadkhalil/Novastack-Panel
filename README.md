@@ -37,11 +37,16 @@ When there is no data yet, every section shows an honest empty state. There is n
 - Supabase Auth for email and password login
 - Supabase Postgres for all data
 - Supabase Row Level Security so a client only ever reads their own project
+- Supabase JS client pinned to an exact version, with a restrictive Content Security Policy in the page
 
 ## Project structure
 
 - `index.html` — the whole dashboard app
+- `.htaccess` — security headers for Apache hosts such as Hostinger
 - `supabase/schema.sql` — database tables, security policies and the signup trigger
+- `supabase/tests-access-control.sql` — 42 regression checks for access control and constraints
+- `supabase/migration-*.sql` — migrations applied after the initial schema, in date order
+- `.gitignore` — blocks env files, keys and secrets from ever being committed
 - `README.md` — this file
 
 ## Setup
@@ -53,6 +58,8 @@ Create a free project at supabase.com. Note the Project URL and the publishable 
 ### 2. Run the schema
 
 In the Supabase dashboard, open SQL Editor, create a new query, paste the contents of `supabase/schema.sql` and run it. This creates the tables `profiles`, `clients`, `projects`, `milestones`, `updates`, `payments`, `deliverables` and `messages`, enables Row Level Security on all of them, and adds a trigger that creates a profile row when a user signs up.
+
+After the schema, run any migration files in `supabase/` in date order, then run `supabase/tests-access-control.sql`. The test run rolls itself back and should end with ALL ACCESS-CONTROL TESTS PASSED (42 tests).
 
 ### 3. Connect the app
 
@@ -80,15 +87,34 @@ This is a static site, so it can be hosted anywhere that serves static files:
 - Netlify, Vercel or Cloudflare Pages: deploy the repo or upload `index.html`
 - Any static host: serve `index.html` over HTTPS
 
-After deploying, set the Site URL in Supabase under Authentication, URL Configuration to the dashboard URL, so confirmation emails link back to the right place.
+After deploying, set the Site URL in Supabase under Authentication, URL Configuration to the dashboard URL, so confirmation emails link back to the right place. Also add the dashboard URL to Redirect URLs, keep Confirm email ON and anonymous sign-ins OFF, and leave Auth rate limits at their defaults. On Hostinger, the `.htaccess` in this repo sets security headers (nosniff, frame deny, strict referrer policy). Verify them after deploy, for example with securityheaders.com.
 
 ## Security
 
 - The publishable key in `index.html` is public by design. Supabase states that publishable keys can be safely shared publicly and used in a browser. It only allows what Row Level Security permits.
-- Row Level Security is what protects the data. A client reads only the project whose client email matches their login email. The founder reads everything.
+- Row Level Security is what protects the data. A client reads only the project whose client email matches their login email. The founder reads everything. Policies are deny-by-default on all 8 tables.
 - Never commit a secret key or service role key to this repo. The secret key bypasses Row Level Security and must stay in Supabase only.
 - Never commit a database password or any personal password.
 - Client isolation is enforced in the database, not only in the interface.
+
+### Audits
+
+Three security audit rounds were run on this app in November 2026, and their fixes are in this repo:
+
+1. **Access control.** RLS verified deny-by-default, clients isolated by login email, all writes founder-only except a client's own messages, and the signup trigger hardcodes role `client` so nobody can promote themselves. The frontend is fail-closed: no view renders before the server returns a confirmed profile, and sign-out wipes all local state. One real gap was found and fixed: `payments.amount` and `projects.total_amount` had no non-negative constraint. A founder-only **Access control tests** panel in the app runs 12 live probes against the real backend.
+2. **XSS and hardening.** User content is rendered through escaping, never raw HTML. A restrictive Content Security Policy is set in the page. One real gap was found and fixed: the `handle_new_user()` function was missing a pinned `search_path`. All data access uses the parameterized Supabase query builder, so there is no string-built SQL.
+3. **SSRF, dependencies and mass assignment.** Deliverable links pass a strict destination check that blocks cloud metadata endpoints, localhost and private IP ranges. The Supabase client library is pinned to an exact version. Create and update calls use explicit field allowlists, all form fields have length limits, and error messages shown to users are generic. No WebSockets, no file uploads, no OAuth providers and no AI integrations exist in this app, so there is nothing to audit there.
+
+### Regression tests
+
+- `supabase/tests-access-control.sql` runs 42 checks in one transaction that rolls back: anonymous denials, client A versus client B isolation, founder access, and boundary values (negative amounts rejected, zero allowed, progress above 100 rejected). Run it after any schema or migration change and expect all 42 to pass.
+- The in-app **Access control tests** panel (founder only) runs 12 live probes after each deploy and should show 12 of 12 passed.
+
+### Production checklist
+
+- Serve over HTTPS with the Site URL and Redirect URLs set in Supabase Auth.
+- Keep **Confirm email ON**, anonymous sign-ins OFF, and new signups ON.
+- Enable secret scanning and push protection in GitHub under Settings, Code security, and turn on Dependabot alerts for the pinned Supabase client version.
 
 ## Local run
 
