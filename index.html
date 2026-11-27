@@ -875,6 +875,22 @@
       @media (max-width: 900px) {
         #authView { min-height: 0; align-items: flex-start; }
       }
+
+      /* ================================================================
+         Client view v2 — the Conversation card moves out of the main
+         column into the side column, directly under Deliverables, so
+         the side column's space is used instead of trailing off under
+         Payments. The message list scrolls inside the card (the reply
+         form stays pinned under it), which keeps the narrower column
+         compact no matter how long the thread gets. On phones the
+         columns stack, so Conversation simply follows Deliverables.
+         ================================================================ */
+      .conv-feed {
+        max-height: 340px; overflow-y: auto; scrollbar-width: thin;
+        overscroll-behavior: contain; padding-right: 2px;
+      }
+      .conv-feed .feed { margin-top: 0; }
+      .conv-feed .feed li:first-child { padding-top: 2px; }
     </style>
   </head>
   <body>
@@ -1760,18 +1776,18 @@
               '<div class="card"><div class="card-head"><div><h3>Latest updates</h3><p class="sub">Progress posts from the NovaStack team.</p></div></div>' +
                 updatesFeed(d.updates, clientName) +
               "</div>" +
-              '<div class="card"><div class="card-head"><div><h3>Conversation</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
-                messagesFeed(d.messages, clientName) +
-                '<hr class="divider" />' +
-                '<form id="clientMsgForm"><label class="field" for="clientMsg">Message NovaStack</label>' +
-                '<textarea id="clientMsg" maxlength="5000" placeholder="Ask a question or request a change..." required></textarea>' +
-                '<div style="margin-top:10px"><button type="submit" class="btn">Send message</button></div></form>' +
-              "</div>" +
             "</div>" +
             '<div class="stack">' +
               waitingCard +
               paymentsCard(project, d, false) +
               deliverablesCard(d, false) +
+              '<div class="card"><div class="card-head"><div><h3>Conversation</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
+                '<div class="conv-feed">' + messagesFeed(d.messages, clientName) + "</div>" +
+                '<hr class="divider" />' +
+                '<form id="clientMsgForm"><label class="field" for="clientMsg">Message NovaStack</label>' +
+                '<textarea id="clientMsg" maxlength="5000" placeholder="Ask a question or request a change..." required></textarea>' +
+                '<div style="margin-top:10px"><button type="submit" class="btn">Send message</button></div></form>' +
+              "</div>" +
             "</div>" +
           "</div>";
 
@@ -1782,6 +1798,10 @@
             loadDetail(S.selProjectId).then(renderClientView).catch(function (e) { toast(errText(e)); });
           });
         }
+        /* The conversation list scrolls inside its card; start it at the
+           newest message, like a chat thread. */
+        var convFeed = box.querySelector(".conv-feed");
+        if (convFeed) convFeed.scrollTop = convFeed.scrollHeight;
         $("clientMsgForm").addEventListener("submit", function (ev) {
           ev.preventDefault();
           var text = $("clientMsg").value.trim();
