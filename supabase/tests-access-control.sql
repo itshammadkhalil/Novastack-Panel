@@ -8,8 +8,10 @@
 -- how many tests failed; a clean run ends with
 -- "ALL ACCESS-CONTROL TESTS PASSED".
 -- Requires: at least one profile with role 'founder' (the founder account).
--- Run supabase/migration-2026-11-27-amount-checks.sql FIRST: the
--- negative-amount boundary tests depend on those CHECK constraints.
+-- Run the migrations FIRST (migration-2026-11-27-amount-checks.sql and
+-- migration-2026-11-27-function-search-path.sql): the negative-amount
+-- boundary tests depend on those CHECK constraints, and the
+-- function-hardening tests depend on the pinned search_path.
 -- The client fixtures below are synthetic test rows, not real clients.
 
 begin;
@@ -267,6 +269,22 @@ begin
 end $$;
 
 reset role;
+
+-- ============ 4) FUNCTION HARDENING: SECURITY DEFINER functions pin search_path ============
+do $$
+declare cfg text[];
+begin
+  select proconfig into cfg from pg_proc
+  where proname = 'handle_new_user' and pronamespace = 'public'::regnamespace;
+  insert into test_results values ('handle_new_user pins search_path',
+    cfg is not null and 'search_path=public' = any(cfg),
+    'proconfig=' || coalesce(array_to_string(cfg, ','), 'null'));
+  select proconfig into cfg from pg_proc
+  where proname = 'is_founder' and pronamespace = 'public'::regnamespace;
+  insert into test_results values ('is_founder pins search_path',
+    cfg is not null and 'search_path=public' = any(cfg),
+    'proconfig=' || coalesce(array_to_string(cfg, ','), 'null'));
+end $$;
 
 -- ============ Summary ============
 select * from test_results order by test;
