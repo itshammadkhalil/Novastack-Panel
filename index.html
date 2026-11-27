@@ -63,6 +63,11 @@
         }
       }
       * { box-sizing: border-box; }
+      /* The hidden attribute must always win: layout classes like .form-grid
+         set display, which would otherwise override the UA [hidden] rule and
+         show elements (e.g. the forgot-password form) that should stay
+         hidden until the user asks for them. */
+      [hidden] { display: none !important; }
       html { -webkit-text-size-adjust: 100%; }
       body {
         margin: 0;
