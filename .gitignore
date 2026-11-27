@@ -1,0 +1,8 @@
+# NovaStack Panel — never commit secrets or credentials
+.env
+.env.*
+*.pem
+*.key
+service_role*.json
+*secret*.json
+.DS_Store
