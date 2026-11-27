@@ -141,6 +141,8 @@
       .auth-msg.err { display: block; background: var(--red-soft); color: var(--red); }
       .auth-msg.ok { display: block; background: var(--green-soft); color: var(--green); }
       .auth-note { color: var(--muted); font-size: 13.5px; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+      .text-btn { background: none; border: 0; padding: 4px 2px; color: var(--brand); font-weight: 700; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
+      .text-btn:hover { color: var(--brand-strong); }
 
       /* ---------- app bar ---------- */
       .controlbar {
@@ -364,10 +366,48 @@
               <label class="field" for="authPass">Password</label>
               <input type="password" id="authPass" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters" />
             </div>
+            <div id="forgotRow" style="text-align:right;margin-top:-4px">
+              <button type="button" class="text-btn" id="forgotBtn">Forgot password?</button>
+            </div>
             <button type="submit" class="btn" id="authSubmit">Sign in</button>
+          </form>
+          <form id="forgotForm" class="form-grid" style="margin-top:12px" hidden>
+            <div>
+              <h2 style="font-size:19px;margin-bottom:6px">Reset your password</h2>
+              <p class="sub" style="color:var(--muted);font-size:14px">Enter the email you sign in with. We will email you a secure link to set a new password. The link expires after a short time and can only be used once.</p>
+            </div>
+            <div>
+              <label class="field" for="forgotEmail">Email</label>
+              <input type="email" id="forgotEmail" autocomplete="email" required maxlength="254" placeholder="you@example.com" />
+            </div>
+            <button type="submit" class="btn" id="forgotSubmit">Email me a reset link</button>
+            <button type="button" class="btn ghost" id="forgotBack">Back to sign in</button>
           </form>
           <p class="auth-msg" id="authMsg" role="status"></p>
           <p class="auth-note">Clients: create your account with the same email address you gave NovaStack for your project. Your dashboard is linked to that email, and you will only ever see your own project.</p>
+          <p class="auth-note" style="border-top:0;padding-top:0;margin-top:10px">Forgot your password? Use the <strong>Forgot password?</strong> link above — a reset link will be sent to your email. NovaStack never sees or stores your password.</p>
+        </div>
+      </section>
+
+      <!-- ================= PASSWORD RECOVERY (from email link) ================= -->
+      <section id="recoveryView" class="auth-wrap" aria-label="Set a new password" hidden>
+        <div class="card">
+          <h1>Set a new password</h1>
+          <p class="intro">You opened a password reset link. Choose a new password for your NovaStack Dashboard account.</p>
+          <form id="newPassForm" class="form-grid" style="margin-top:16px">
+            <div>
+              <label class="field" for="newPass">New password</label>
+              <input type="password" id="newPass" autocomplete="new-password" required minlength="6" placeholder="At least 6 characters" />
+            </div>
+            <div>
+              <label class="field" for="newPass2">Confirm new password</label>
+              <input type="password" id="newPass2" autocomplete="new-password" required minlength="6" placeholder="Type it again" />
+            </div>
+            <button type="submit" class="btn" id="newPassSubmit">Save new password</button>
+            <button type="button" class="btn ghost" id="recoveryCancel">Cancel and sign in</button>
+          </form>
+          <p class="auth-msg" id="recoveryMsg" role="status"></p>
+          <p class="auth-note">If this link has expired or was already used, go back to sign in and request a fresh reset link from <strong>Forgot password?</strong></p>
         </div>
       </section>
 
@@ -444,10 +484,20 @@
                     <label class="field" for="ncTitle">Project title</label>
                     <input type="text" id="ncTitle" required maxlength="200" placeholder="e.g. Bakery website and online ordering" />
                   </div>
-                  <div>
-                    <label class="field" for="ncPrice">Project value (PKR)</label>
-                    <input type="number" id="ncPrice" required min="0" step="any" placeholder="e.g. 150000" />
+                  <div class="form-2col">
+                    <div>
+                      <label class="field" for="ncCurrency">Currency</label>
+                      <select id="ncCurrency">
+                        <option value="PKR" selected>PKR — Pakistani Rupee</option>
+                        <option value="USDT">USDT — Tether (international)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="field" for="ncPrice">Project value</label>
+                      <input type="number" id="ncPrice" required min="0" step="any" placeholder="e.g. 150000 or 500" />
+                    </div>
                   </div>
+                  <p class="sub">Use <strong>PKR</strong> for local clients and <strong>USDT</strong> for international clients. All totals, payments and remaining balance for this project will be shown in the chosen currency.</p>
                   <button type="submit" class="btn">Add client and project</button>
                 </form>
               </div>
@@ -468,6 +518,10 @@
             <hr class="divider" />
             <h3 style="font-size:14.5px">One setting to keep on</h3>
             <p class="sub" style="margin-top:4px">Client accounts are linked to their project by email address. In Supabase, keep Authentication &rarr; Sign In / Providers &rarr; <strong>Confirm email</strong> switched on, so nobody can register a client's email address before the client does and claim their project view.</p>
+            <h3 style="font-size:14.5px;margin-top:18px">Password recovery (forgot password)</h3>
+            <p class="sub" style="margin-top:4px">Any user — client or founder — who forgets their password uses <strong>Forgot password?</strong> on the sign-in screen. Supabase Auth emails a single-use, short-lived reset link; opening it lands on this dashboard's <strong>Set a new password</strong> screen, where the user chooses a new password with <code>updateUser</code>. No password is ever stored or seen by NovaStack, and this page never handles the old password. For the email link to land here, keep Supabase Authentication &rarr; URL Configuration &rarr; <strong>Site URL</strong> set to <strong>https://dashboard.novastackltd.com/</strong> and that same URL in <strong>Redirect URLs</strong> (both already set). If a client says the link expired, tell them to request a fresh one — old links cannot be reused.</p>
+            <h3 style="font-size:14.5px;margin-top:18px">PKR and USDT projects</h3>
+            <p class="sub" style="margin-top:4px">When you add a client or create a project, choose <strong>PKR</strong> for local clients or <strong>USDT</strong> for international clients. The whole project — value, paid, remaining and every payment row — is then shown in that currency, and the founder stats keep PKR and USDT totals separate (they are never added together or converted). Payment methods now include <strong>USDT (TRC20)</strong> and <strong>USDT (ERC20)</strong> alongside bank transfer, JazzCash and EasyPaisa. You can also switch an existing project's currency in Project settings — do it before recording payments, because amounts are not converted automatically.</p>
             <h3 style="font-size:14.5px;margin-top:18px">Production settings outside this page</h3>
             <p class="sub" style="margin-top:4px">Login sessions, token signing, expiry and refresh rotation are handled by Supabase Auth, and this page sets no cookies of its own; keep the default session settings in Supabase Authentication as they are. On Hostinger, keep HTTPS forced on for this subdomain; response headers such as Strict-Transport-Security and X-Content-Type-Options are sent by the host, not by this file, so check them there. In the GitHub repo, turn on Dependabot alerts and secret scanning with push protection (Settings, Code security) so a vulnerable library version or a leaked key is flagged automatically. The sign-in library on this page is pinned to one exact version, so it can never change silently; update it deliberately, one version at a time.</p>
           </div>
@@ -508,6 +562,9 @@
         "default": ["Discovery and brief", "Design", "Build", "Review and revisions", "Launch and handover"]
       };
 
+      var CURRENCIES = ["PKR", "USDT"];
+      function validCurrency(c) { return CURRENCIES.indexOf(c) !== -1 ? c : "PKR"; }
+
       var PSTATUS = {
         in_progress: { label: "In progress", chip: "brand" },
         review: { label: "In review", chip: "amber" },
@@ -538,7 +595,10 @@
         });
       }
       function money(n, cur) {
-        return (cur || "PKR") + " " + Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+        var c = validCurrency(cur || "PKR");
+        var v = Number(n || 0);
+        /* USDT amounts often need decimals; PKR stays whole. */
+        return c + " " + v.toLocaleString("en-US", { maximumFractionDigits: c === "USDT" ? 2 : 0, minimumFractionDigits: 0 });
       }
       function fmtDate(d) {
         if (!d) return "";
@@ -563,6 +623,10 @@
         if (/invalid login credentials/i.test(m)) return "Email or password is not correct.";
         if (/already registered/i.test(m)) return "An account with this email already exists. Sign in instead.";
         if (/email not confirmed/i.test(m)) return "Please confirm your email first, then sign in.";
+        if (/rate limit|too many requests|over_email_send_rate_limit/i.test(m)) return "Too many reset emails requested. Please wait a few minutes and try again.";
+        if (/token.*expired|expired.*token|invalid.*token|otp_expired/i.test(m)) return "This reset link has expired or was already used. Request a fresh link from Forgot password.";
+        if (/password should be|weak password|password.*at least/i.test(m)) return "Please choose a stronger password (at least 6 characters).";
+        if (/same password|new password should be different/i.test(m)) return "Your new password must be different from your old password.";
         /* Anything unmapped falls back to a generic message: raw backend
            errors can carry schema and policy detail that should not be
            shown in the UI. The original stays in the console for debugging. */
@@ -644,22 +708,34 @@
 
       /* ---------- view switching ---------- */
       function showOnly(id) {
-        ["authView", "loadingView", "appView"].forEach(function (v) { $(v).hidden = v !== id; });
+        ["authView", "loadingView", "appView", "recoveryView"].forEach(function (v) { $(v).hidden = v !== id; });
+      }
+      function setRecoveryMsg(msg, kind) {
+        var el = $("recoveryMsg");
+        if (!el) return;
+        el.textContent = msg;
+        el.className = "auth-msg" + (kind ? " " + kind : "");
       }
 
       /* ---------- auth ---------- */
       var authMode = "signin";
       function setAuthMode(mode) {
         authMode = mode;
+        var isForgot = mode === "forgot";
+        $("authForm").hidden = isForgot;
+        $("forgotForm").hidden = !isForgot;
+        /* The Sign in / Create account tabs only apply to the normal form. */
+        document.querySelector(".seg").style.display = isForgot ? "none" : "";
         $("modeSignin").classList.toggle("active", mode === "signin");
         $("modeSignup").classList.toggle("active", mode === "signup");
         $("modeSignin").setAttribute("aria-selected", mode === "signin" ? "true" : "false");
         $("modeSignup").setAttribute("aria-selected", mode === "signup" ? "true" : "false");
         $("nameField").hidden = mode !== "signup";
         $("authName").required = mode === "signup";
+        $("forgotRow").hidden = mode !== "signin";
         $("authPass").setAttribute("autocomplete", mode === "signup" ? "new-password" : "current-password");
         $("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
-        setAuthMsg("", "");
+        if (!isForgot) setAuthMsg("", "");
       }
       function setAuthMsg(msg, kind) {
         var el = $("authMsg");
@@ -703,6 +779,94 @@
             })
             .catch(function (e) { done(); setAuthMsg(errText(e), "err"); });
         }
+      });
+
+      /* ---------- forgot password: request a reset link ---------- */
+      $("forgotBtn").addEventListener("click", function () {
+        var current = $("authEmail").value.trim();
+        if (current) $("forgotEmail").value = current;
+        setAuthMode("forgot");
+        setAuthMsg("", "");
+      });
+      $("forgotBack").addEventListener("click", function () { setAuthMode("signin"); });
+      $("forgotForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        if (!sb) { setAuthMsg("Sign-in could not load. Check your connection and reload the page.", "err"); return; }
+        var email = $("forgotEmail").value.trim();
+        if (!email) return;
+        var btn = $("forgotSubmit");
+        btn.disabled = true;
+        btn.textContent = "Sending...";
+        setAuthMsg("", "");
+        /* No redirectTo is passed on purpose: Supabase then uses the Site URL
+           configured in the dashboard (https://dashboard.novastackltd.com/),
+           which is already in the Redirect URLs allowlist. The link Supabase
+           emails is single-use, short-lived and handled by Supabase Auth. */
+        sb.auth.resetPasswordForEmail(email)
+          .then(function (r) {
+            btn.disabled = false;
+            btn.textContent = "Email me a reset link";
+            if (r.error) { setAuthMsg(errText(r.error), "err"); return; }
+            /* Same message whether or not the account exists, so this form
+               cannot be used to check which emails are registered. */
+            setAuthMode("signin");
+            $("authEmail").value = email;
+            setAuthMsg("If an account exists for " + email + ", a password reset link is on its way. Check your inbox (and spam folder), open the link, and set a new password. The link can only be used once.", "ok");
+          })
+          .catch(function (e) {
+            btn.disabled = false;
+            btn.textContent = "Email me a reset link";
+            setAuthMsg(errText(e), "err");
+          });
+      });
+
+      /* ---------- password recovery: set a new password from the email link ---------- */
+      var inRecovery = false;
+      function showRecovery() {
+        inRecovery = true;
+        setRecoveryMsg("", "");
+        showOnly("recoveryView");
+      }
+      $("recoveryCancel").addEventListener("click", function () {
+        inRecovery = false;
+        var back = function () { showOnly("authView"); setAuthMode("signin"); };
+        if (sb) sb.auth.signOut().then(back, back);
+        else back();
+      });
+      $("newPassForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        if (!sb) { setRecoveryMsg("Could not load. Check your connection and reload the page.", "err"); return; }
+        var p1 = $("newPass").value;
+        var p2 = $("newPass2").value;
+        if (p1.length < 6) { setRecoveryMsg("Password must be at least 6 characters.", "err"); return; }
+        if (p1 !== p2) { setRecoveryMsg("The two passwords do not match. Type them again.", "err"); return; }
+        var btn = $("newPassSubmit");
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+        setRecoveryMsg("", "");
+        sb.auth.updateUser({ password: p1 })
+          .then(function (r) {
+            btn.disabled = false;
+            btn.textContent = "Save new password";
+            if (r.error) { setRecoveryMsg(errText(r.error), "err"); return; }
+            inRecovery = false;
+            /* Clear any recovery marker so later auth events go to the app normally. */
+            try { history.replaceState(null, "", window.location.pathname); } catch (e) {}
+            $("newPass").value = "";
+            $("newPass2").value = "";
+            toast("Password updated. You are signed in with your new password.");
+            /* The recovery session is a normal signed-in session now: load the app. */
+            return sb.auth.getSession().then(function (s) {
+              var sess = s.data && s.data.session;
+              if (sess) enterApp(sess.user, true);
+              else { showOnly("authView"); setAuthMode("signin"); setAuthMsg("Password updated. Please sign in with your new password.", "ok"); }
+            });
+          })
+          .catch(function (e) {
+            btn.disabled = false;
+            btn.textContent = "Save new password";
+            setRecoveryMsg(errText(e), "err");
+          });
       });
 
       $("signOutBtn").addEventListener("click", function () {
@@ -891,6 +1055,7 @@
             '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="amt">' + money(p.amount, project.currency) + "</span>" + chip + action + "</span></li>";
         }).join("") : '<li><p class="empty">No payments recorded yet.</p></li>';
         return '<div class="card"><h3>Payments</h3>' +
+          (validCurrency(project.currency) === "USDT" ? '<p class="sub">This is an international (USDT) project — totals and payments are in USDT. Accepted methods include USDT (TRC20 / ERC20) and bank transfer; NovaStack will confirm the wallet/network with you before you send.</p>' : '<p class="sub">Totals and payments are in PKR.</p>') +
           '<div class="pay-nums">' +
             '<div class="pay-num"><p class="k">Total</p><p class="v">' + money(total, project.currency) + "</p></div>" +
             '<div class="pay-num"><p class="k">Paid</p><p class="v">' + money(paid, project.currency) + "</p></div>" +
@@ -1048,11 +1213,17 @@
       function renderStats() {
         var active = S.projects.filter(function (p) { return p.status !== "completed"; }).length;
         var waiting = S.projects.filter(function (p) { return p.status === "waiting_on_client"; }).length;
+        var pkrTotal = S.projects.filter(function (p) { return validCurrency(p.currency) === "PKR"; }).reduce(function (s, p) { return s + Number(p.total_amount || 0); }, 0);
+        var usdtTotal = S.projects.filter(function (p) { return validCurrency(p.currency) === "USDT"; }).reduce(function (s, p) { return s + Number(p.total_amount || 0); }, 0);
+        var valueParts = [];
+        if (pkrTotal > 0 || usdtTotal === 0) valueParts.push(money(pkrTotal, "PKR"));
+        if (usdtTotal > 0) valueParts.push(money(usdtTotal, "USDT"));
+        var valueSub = usdtTotal > 0 && pkrTotal > 0 ? "PKR and USDT projects, shown separately — never added together" : usdtTotal > 0 ? "across all USDT projects" : "across all projects";
         $("statsRow").innerHTML =
           '<div class="card stat"><p class="k">Total clients</p><p class="v">' + S.clients.length + '</p><p class="s">' + S.projects.length + " projects</p></div>" +
           '<div class="card stat"><p class="k">Active projects</p><p class="v">' + active + '</p><p class="s">not yet completed</p></div>' +
           '<div class="card stat"><p class="k">Waiting on client</p><p class="v">' + waiting + '</p><p class="s">projects need client input</p></div>' +
-          '<div class="card stat"><p class="k">Project value</p><p class="v">' + money(S.projects.reduce(function (s, p) { return s + Number(p.total_amount || 0); }, 0)) + '</p><p class="s">across all projects</p></div>';
+          '<div class="card stat"><p class="k">Project value</p><p class="v" style="font-size:' + (valueParts.length > 1 ? "19px" : "27px") + '">' + esc(valueParts.join("  ·  ")) + '</p><p class="s">' + esc(valueSub) + "</p></div>";
       }
 
       var FILTERS = [
@@ -1148,11 +1319,12 @@
               '<div><label class="field" for="cpService">Service</label><select id="cpService">' +
                 SERVICES.map(function (s) { return '<option value="' + esc(s) + '"' + (c.service === s ? " selected" : "") + ">" + esc(s) + "</option>"; }).join("") +
               "</select></div>" +
-              '<div><label class="field" for="cpPrice">Project value (PKR)</label><input type="number" id="cpPrice" min="0" step="any" required placeholder="e.g. 150000" /></div>' +
+              '<div class="form-2col"><div><label class="field" for="cpCurrency">Currency</label><select id="cpCurrency"><option value="PKR" selected>PKR</option><option value="USDT">USDT (international)</option></select></div>' +
+              '<div><label class="field" for="cpPrice">Project value</label><input type="number" id="cpPrice" min="0" step="any" required placeholder="e.g. 150000 or 500" /></div></div>' +
               '<button type="submit" class="btn">Create project</button></form>';
           $("createProjectForm").addEventListener("submit", function (ev) {
             ev.preventDefault();
-            createProject(c, $("cpTitle").value.trim(), $("cpService").value, Number($("cpPrice").value) || 0)
+            createProject(c, $("cpTitle").value.trim(), $("cpService").value, Number($("cpPrice").value) || 0, validCurrency($("cpCurrency").value))
               .then(function () { toast("Project created for " + c.name + "."); })
               .catch(function (e) { toast(errText(e)); });
           });
@@ -1194,7 +1366,11 @@
               '<div><label class="field" for="setStatus">Status</label><select id="setStatus">' + statusOptions + "</select></div>" +
               '<div><label class="field" for="setProgress">Progress %</label><input type="number" id="setProgress" min="0" max="100" value="' + pct + '" /></div>' +
             "</div>" +
-            '<div><label class="field" for="setTotal">Project value (' + esc(p.currency || "PKR") + ')</label><input type="number" id="setTotal" min="0" step="any" value="' + Number(p.total_amount || 0) + '" /></div>' +
+            '<div class="form-2col">' +
+              '<div><label class="field" for="setCurrency">Currency</label><select id="setCurrency">' + CURRENCIES.map(function (cur) { return '<option value="' + cur + '"' + (validCurrency(p.currency) === cur ? " selected" : "") + ">" + cur + (cur === "USDT" ? " (international)" : "") + "</option>"; }).join("") + '</select></div>' +
+              '<div><label class="field" for="setTotal">Project value</label><input type="number" id="setTotal" min="0" step="any" value="' + Number(p.total_amount || 0) + '" /></div>' +
+            "</div>" +
+            '<p class="sub">Changing currency only relabels this project\'s value and payments — amounts are not converted. Change it before recording payments, or update the amounts to match.</p>' +
             '<div><button type="submit" class="btn ghost">Save settings</button></div></form>' +
 
           '<hr class="divider" /><h3>Milestones</h3><p class="sub">Tap a status to update it. Progress recalculates from milestones and the client sees changes on their dashboard.</p>' +
@@ -1217,7 +1393,7 @@
               '<div><label class="field" for="payStatus">Status</label><select id="payStatus"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>' +
             "</div>" +
             '<div class="form-2col">' +
-              '<div><label class="field" for="payMethod">Method</label><select id="payMethod"><option>Bank transfer</option><option>JazzCash</option><option>EasyPaisa</option><option>Cash</option><option>Card</option><option>Other</option></select></div>' +
+              '<div><label class="field" for="payMethod">Method</label><select id="payMethod"><option>Bank transfer</option><option>JazzCash</option><option>EasyPaisa</option><option>USDT (TRC20)</option><option>USDT (ERC20)</option><option>USDT</option><option>Cash</option><option>Card</option><option>Other</option></select></div>' +
               '<div><label class="field" for="payNote">Note (optional)</label><input type="text" id="payNote" maxlength="300" placeholder="e.g. Advance payment" /></div>' +
             "</div>" +
             '<div><button type="submit" class="btn">Record payment</button></div></form>' +
@@ -1322,9 +1498,10 @@
 
         $("settingsForm").addEventListener("submit", function (ev) {
           ev.preventDefault();
-          /* Explicit field allowlist: only these four project fields can be
-             written from this form, each validated on its own. Ownership,
-             currency and id are never taken from form input; role and
+          /* Explicit field allowlist: only these project fields can be
+             written from this form, each validated on its own. Currency is
+             now founder-editable but only as a validated PKR/USDT value;
+             ownership and id are never taken from form input; role and
              payment-status fields live behind their own controls and RLS. */
           var status = $("setStatus").value;
           if (!PSTATUS[status]) return;
@@ -1332,7 +1509,8 @@
             title: $("setTitle").value.trim().slice(0, 200),
             status: status,
             progress: Math.max(0, Math.min(100, Number($("setProgress").value) || 0)),
-            total_amount: Math.max(0, Number($("setTotal").value) || 0)
+            total_amount: Math.max(0, Number($("setTotal").value) || 0),
+            currency: validCurrency($("setCurrency").value)
           };
           if (!patch.title) return;
           sb.from("projects").update(patch).eq("id", p.id)
@@ -1378,13 +1556,16 @@
           if (!amt || amt <= 0) return;
           var st = $("payStatus").value;
           if (st !== "paid" && st !== "pending") return;
+          var PAY_METHODS = ["Bank transfer", "JazzCash", "EasyPaisa", "USDT (TRC20)", "USDT (ERC20)", "USDT", "Cash", "Card", "Other"];
+          var method = $("payMethod").value;
+          if (PAY_METHODS.indexOf(method) === -1) return;
           sb.from("payments").insert({
             project_id: p.id,
             amount: amt,
-            method: $("payMethod").value,
+            method: method,
             status: st,
             paid_at: st === "paid" ? new Date().toISOString() : null,
-            note: $("payNote").value.trim() || null
+            note: $("payNote").value.trim().slice(0, 300) || null
           })
             .then(function (r) {
               if (r.error) throw r.error;
@@ -1426,7 +1607,7 @@
         });
       }
 
-      function createProject(client, title, service, total) {
+      function createProject(client, title, service, total, currency) {
         var today = new Date();
         var isoDate = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
         var projectId = null;
@@ -1437,7 +1618,7 @@
           status: "in_progress",
           progress: 0,
           total_amount: total,
-          currency: "PKR",
+          currency: validCurrency(currency),
           start_date: isoDate
         }).select().single()
           .then(function (r) {
@@ -1490,6 +1671,7 @@
         var service = svcSel.value;
         var title = $("ncTitle").value.trim();
         var price = Number($("ncPrice").value) || 0;
+        var currency = validCurrency($("ncCurrency") ? $("ncCurrency").value : "PKR");
         if (!name || !email || !title) return;
         var btn = ev.target.querySelector("button[type=submit]");
         btn.disabled = true;
@@ -1505,7 +1687,7 @@
           .then(function (r) {
             if (r.error) throw r.error;
             newClient = r.data;
-            return createProject(newClient, title, service, price);
+            return createProject(newClient, title, service, price, currency);
           })
           .then(function () {
             btn.disabled = false;
@@ -1673,14 +1855,26 @@
         showOnly("authView");
         setAuthMsg("The sign-in library could not load. Check your connection and reload the page.", "err");
       } else {
+        /* If the page was opened from a reset email, the URL carries a
+           recovery marker before Supabase consumes it — show the new-password
+           form instead of briefly flashing the dashboard. */
+        var bootHash = (window.location.hash || "") + (window.location.search || "");
+        var looksLikeRecovery = /type=recovery/.test(bootHash);
         sb.auth.getSession().then(function (r) {
           var session = r.data && r.data.session;
-          if (session) enterApp(session.user);
-          else showOnly("authView");
-        }).catch(function () { showOnly("authView"); });
+          if (looksLikeRecovery && session) { showRecovery(); return; }
+          if (session && !inRecovery) enterApp(session.user);
+          else if (!inRecovery) showOnly("authView");
+        }).catch(function () { if (!inRecovery) showOnly("authView"); });
 
         sb.auth.onAuthStateChange(function (event, session) {
-          if (event === "SIGNED_IN" && session) {
+          if (event === "PASSWORD_RECOVERY") {
+            /* Supabase verified the reset link and started a recovery
+               session: the only thing this session should do first is set
+               a new password. */
+            showRecovery();
+          } else if (event === "SIGNED_IN" && session) {
+            if (inRecovery || looksLikeRecovery) { showRecovery(); return; }
             enterApp(session.user);
           } else if (event === "SIGNED_OUT") {
             /* Clear every trace of the previous user's data and role so a
@@ -1699,6 +1893,9 @@
             S.selProjectId = null;
             S.filter = "All";
             S.search = "";
+            inRecovery = false;
+            looksLikeRecovery = false;
+            setAuthMode("signin");
             showOnly("authView");
           }
         });
