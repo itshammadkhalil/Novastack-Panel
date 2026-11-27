@@ -717,7 +717,8 @@
       }
       .side-label {
         font-family: "Sora", sans-serif; font-size: 13.5px; font-weight: 800;
-        letter-spacing: -.01em; color: var(--side-ink); padding: 2px 10px 0;
+        letter-spacing: .04em; text-transform: uppercase; color: var(--side-muted);
+        padding: 2px 10px 14px; border-bottom: 1px solid var(--side-line);
       }
       .side-nav button { white-space: nowrap; }
       .side-nav .nav-badge { flex: 0 0 auto; }
@@ -974,10 +975,7 @@
         <!-- ================= FOUNDER VIEW ================= -->
         <section id="founderView" aria-label="Founder dashboard" hidden>
           <aside class="founder-side">
-            <div class="side-brand">
-              <svg class="logo-mark" width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1b222b"/><path d="M32 9 55 32 32 55 9 32Z" fill="none" stroke="#f0732f" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 18.5 45.5 32 32 45.5 18.5 32Z" fill="none" stroke="#43b06e" stroke-width="3" stroke-linejoin="round"/><path d="M32 25.5 38.5 32 32 38.5 25.5 32Z" fill="#f0732f"/></svg>
-              <div class="bt"><strong>NovaStack</strong><span>Founder Console</span></div>
-            </div>
+            <div class="side-label">Founder Console</div>
             <nav class="side-nav" aria-label="Founder console sections">
               <button type="button" data-ftab="overview" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
               <button type="button" data-ftab="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Add a client</button>
