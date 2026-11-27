@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Content Security Policy (defense in depth; the primary XSS defense is
+         that every dynamic value below is rendered through esc()/textContent):
+         only this page, the Supabase JS CDN and Google Fonts may load code or
+         styles; network calls may go only to this origin and the Supabase
+         project (REST + realtime websocket); plugins, nested frames and
+         base-tag hijacking are disabled. 'unsafe-inline' is required for the
+         single inline script/style blocks of this one-file page. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://ahrcawizoyycsjharjkc.supabase.co wss://ahrcawizoyycsjharjkc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'none'" />
     <link rel="icon" href="data:," />
     <title>NovaStack Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -839,7 +847,7 @@
           var when = fmtDate(p.paid_at || p.created_at);
           var action = "";
           if (forFounder && p.status !== "paid") {
-            action = ' <button type="button" class="btn ghost small" data-mark-paid="' + p.id + '">Mark paid</button>';
+            action = ' <button type="button" class="btn ghost small" data-mark-paid="' + esc(p.id) + '">Mark paid</button>';
           }
           return "<li><span class=\"lbl\">" + esc(label) + (when ? '<span class="dt">' + esc(when) + (p.method && p.note ? " · " + esc(p.method) : "") + "</span>" : "") + '</span>' +
             '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="amt">' + money(p.amount, project.currency) + "</span>" + chip + action + "</span></li>";
@@ -861,7 +869,7 @@
             ? '<a class="btn ghost small" href="' + esc(url) + '" target="_blank" rel="noopener">Open</a>'
             : "";
           if (forFounder) {
-            action += ' <button type="button" class="btn danger small" data-del-deliverable="' + d.id + '">Remove</button>';
+            action += ' <button type="button" class="btn danger small" data-del-deliverable="' + esc(d.id) + '">Remove</button>';
           }
           return "<li>" +
             '<span class="dl-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>' +
@@ -899,18 +907,21 @@
         if (S.projects.length > 1) {
           projectPicker = '<div style="margin-bottom:16px"><label class="field" for="projectPicker">Your projects</label>' +
             '<select id="projectPicker" style="max-width:420px">' + S.projects.map(function (p) {
-              return '<option value="' + p.id + '"' + (p.id === project.id ? " selected" : "") + ">" + esc(p.title) + "</option>";
+              return '<option value="' + esc(p.id) + '"' + (p.id === project.id ? " selected" : "") + ">" + esc(p.title) + "</option>";
             }).join("") + "</select></div>";
         }
 
         var milestones = d.milestones.length ? d.milestones.map(function (m) {
+          /* Whitelist the status before it is used as a CSS class, so a
+             stored value can never break out of the class attribute. */
+          var msCls = m.status === "done" ? "done" : m.status === "in_progress" ? "in_progress" : "pending";
           var icon = m.status === "done"
             ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
             : "";
           var dateLine = m.status === "done" && m.completed_at ? "Done " + fmtDate(m.completed_at)
             : m.status === "in_progress" ? "In progress now"
             : "Not started yet";
-          return '<li class="ms-item ' + m.status + '">' +
+          return '<li class="ms-item ' + msCls + '">' +
             '<span class="ms-dot">' + icon + "</span>" +
             '<div class="ms-body"><div class="ms-top"><span class="ms-name">' + esc(m.title) + "</span>" + msChip(m.status) + "</div>" +
             '<p class="ms-date">' + esc(dateLine) + "</p></div></li>";
@@ -1047,12 +1058,12 @@
         $("clientRows").innerHTML = list.map(function (c) {
           var p = projectOf(c.id);
           if (!p) {
-            return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + c.id + '">' +
+            return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + esc(c.id) + '">' +
               '<span class="r1"><span class="nm">' + esc(c.name) + '</span><span class="chip grey">No project</span></span>' +
               '<span class="sv" style="display:block">' + esc(c.email) + "</span></button></li>";
           }
           var pct = Math.max(0, Math.min(100, Number(p.progress || 0)));
-          return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + c.id + '">' +
+          return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + esc(c.id) + '">' +
             '<span class="r1"><span class="nm">' + esc(c.name) + "</span>" + statusChip(p.status) + "</span>" +
             '<span class="sv" style="display:block">' + esc(p.title) + " · " + esc(c.email) + "</span>" +
             '<span class="bar mini-bar" style="display:block"><span style="display:block;height:100%;width:' + pct + '%;border-radius:999px;background:' + (pct >= 100 ? "var(--green)" : "var(--brand)") + '"></span></span>' +
@@ -1120,10 +1131,10 @@
 
         var msEdit = d.milestones.length ? d.milestones.map(function (m) {
           function btn(st, label, cls) {
-            return '<button type="button" data-ms="' + m.id + '" data-st="' + st + '"' + (m.status === st ? ' class="' + cls + '"' : "") + ">" + label + "</button>";
+            return '<button type="button" data-ms="' + esc(m.id) + '" data-st="' + st + '"' + (m.status === st ? ' class="' + cls + '"' : "") + ">" + label + "</button>";
           }
           return '<li><div class="row"><span class="nm">' + esc(m.title) + '</span>' +
-            '<button type="button" class="btn danger small" data-del-ms="' + m.id + '">Remove</button></div>' +
+            '<button type="button" class="btn danger small" data-del-ms="' + esc(m.id) + '">Remove</button></div>' +
             '<span class="status-btns">' +
             btn("pending", "Pending", "on-pending") + btn("in_progress", "In progress", "on-active") + btn("done", "Done", "on-done") +
             "</span></li>";
@@ -1537,7 +1548,7 @@
         tests.push({
           name: "Anonymous role escalation is rejected: profiles",
           run: function () {
-            return aclAnon("profiles?id=eq." + S.user.id, {
+            return aclAnon("profiles?id=eq." + encodeURIComponent(S.user.id), {
               method: "PATCH", prefer: "return=representation",
               body: { role: "founder" }
             }).then(function (r) {
