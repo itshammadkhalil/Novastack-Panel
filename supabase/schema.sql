@@ -34,7 +34,7 @@ create table if not exists public.projects (
   status text not null default 'in_progress' check (status in ('in_progress', 'review', 'waiting_on_client', 'completed')),
   progress int not null default 0 check (progress >= 0 and progress <= 100),
   total_amount numeric not null default 0 check (total_amount >= 0),
-  currency text not null default 'PKR',
+  currency text not null default 'PKR' check (currency in ('PKR', 'USDT')),
   start_date date,
   created_at timestamptz not null default now()
 );
