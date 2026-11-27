@@ -910,6 +910,7 @@
       @media (prefers-reduced-motion: reduce) {
         .loading-card::before { animation: none; }
       }
+
     </style>
   </head>
   <body>
@@ -1207,7 +1208,13 @@
         filter: "All",
         search: "",
         manageTab: "project",
-        founderTab: "overview"
+        founderTab: "overview",
+        /* Live conversation state (this session only): the newest message
+           timestamp seen so far, and the ids already handled, so the
+           realtime feed and the polling fallback never show the same
+           message twice. */
+        msgWatermark: null,
+        seenIncoming: {}
       };
 
       /* ---------- helpers ---------- */
@@ -1622,6 +1629,9 @@
             enteredUserId = user.id;
             entering = false;
             renderApp();
+            /* Live conversation starts once the first load is on screen;
+               guarded, so Refresh and re-entry never stack subscriptions. */
+            startRealtime();
           })
           .catch(function (e) {
             entering = false;
@@ -1785,6 +1795,90 @@
           });
         });
       }
+      /* ---------- live conversation: realtime ----------
+         Until now a message only appeared after a manual refresh: the
+         thread was fetched once at load and never again. Now a Supabase
+         Realtime subscription pushes every new message row the moment it
+         is inserted (Row Level Security scopes the feed, so a client only
+         ever receives their own project's messages), and a light poll
+         every 20 seconds covers the case where the realtime feed is not
+         available. Both paths run through handleIncomingMessage, which
+         dedupes by message id, so a message can never arrive twice. */
+      function repaintOpenConversation() {
+        if (!S.detail) return;
+        if (S.role === "founder") { paintFounderConv(); return; }
+        var project = currentProject();
+        if (!project || project.id !== S.detailProjectId) return;
+        var clientName = (S.myClient && S.myClient.name) || (S.profile && S.profile.full_name) || "Client";
+        paintClientConv(project, clientName);
+      }
+      function handleIncomingMessage(row) {
+        if (!row || !row.id || !S.user || !S.profile) return;
+        if (S.seenIncoming[row.id]) return;
+        S.seenIncoming[row.id] = true;
+        if (Object.keys(S.seenIncoming).length > 1000) S.seenIncoming = {};
+        if (row.created_at && (!S.msgWatermark || row.created_at > S.msgWatermark)) S.msgWatermark = row.created_at;
+        if (S.detail && S.detailProjectId === row.project_id) {
+          var exists = false;
+          S.detail.messages.forEach(function (m) { if (m.id === row.id) exists = true; });
+          if (!exists) {
+            /* Our own optimistic send may still be in flight when its row
+               echoes back: swap the temporary copy for the real row
+               instead of showing the message twice. */
+            var ti = -1;
+            S.detail.messages.forEach(function (m, i) {
+              if (ti === -1 && m.pending && m.sender_role === row.sender_role && m.body === row.body) ti = i;
+            });
+            if (ti > -1) S.detail.messages[ti] = row;
+            else S.detail.messages.push(row);
+            repaintOpenConversation();
+          }
+        }
+      }
+      var rtChannel = null;
+      var pollTimer = null;
+      function pollMessages() {
+        if (!sb || !S.user || document.hidden) return;
+        var q = sb.from("messages").select("*").order("created_at", { ascending: true }).limit(100);
+        if (S.msgWatermark) q = q.gt("created_at", S.msgWatermark);
+        q.then(function (r) {
+          if (r.error || !r.data) return;
+          r.data.forEach(handleIncomingMessage);
+        }).catch(function () {});
+      }
+      function startRealtime() {
+        if (!sb || rtChannel) return;
+        /* Only messages newer than what the initial load already showed
+           may arrive live; anything older was on screen at sign-in. */
+        if (!S.msgWatermark) {
+          var wm = null;
+          if (S.detail) S.detail.messages.forEach(function (m) {
+            if (m.created_at && (!wm || m.created_at > wm)) wm = m.created_at;
+          });
+          S.msgWatermark = wm || new Date().toISOString();
+        }
+        try {
+          rtChannel = sb.channel("messages-live")
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, function (payload) {
+              handleIncomingMessage(payload && payload.new);
+            })
+            .subscribe();
+        } catch (e) { rtChannel = null; }
+        pollTimer = setInterval(pollMessages, 20000);
+        pollMessages();
+      }
+      function stopRealtime() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (sb && rtChannel) { try { sb.removeChannel(rtChannel); } catch (e) {} }
+        rtChannel = null;
+      }
+      /* Returning to the tab catches up instantly instead of waiting for
+         the next poll tick. */
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) return;
+        pollMessages();
+      });
+
       function paymentsCard(project, detail, forFounder) {
         var total = Number(project.total_amount || 0);
         var paid = paidOf(detail, project);
@@ -1846,6 +1940,19 @@
         feed.innerHTML = messagesFeed(S.detail.messages, clientName);
         feed.scrollTop = feed.scrollHeight;
         wireMsgActions(feed, project.id, function () { paintClientConv(project, clientName); });
+      }
+      /* Founder twin of paintClientConv: repaint only the message list
+         inside the manage panel's Messages section. A full panel render
+         here would throw away a reply the founder is halfway through
+         typing when a client message lands. */
+      function paintFounderConv() {
+        var panel = $("managePanel");
+        if (!panel || !S.detail) return;
+        var feed = panel.querySelector(".founder-conv-feed");
+        if (!feed) return;
+        var c = clientOf(S.selClientId);
+        feed.innerHTML = messagesFeed(S.detail.messages, c ? c.name : "Client");
+        wireMsgActions(feed, S.detailProjectId, paintFounderConv);
       }
 
       function renderClientView() {
@@ -1935,7 +2042,7 @@
               waitingCard +
               paymentsCard(project, d, false) +
               deliverablesCard(d, false) +
-              '<div class="card"><div class="card-head"><div><h3>Conversation</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
+              '<div class="card" id="convCard"><div class="card-head"><div><h3>Conversation' + '</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
                 '<div class="conv-feed">' + messagesFeed(d.messages, clientName) + "</div>" +
                 '<hr class="divider" />' +
                 '<form id="clientMsgForm"><label class="field" for="clientMsg">Message NovaStack</label>' +
@@ -2185,7 +2292,7 @@
 
           '<div class="manage-section" data-msec="messages" hidden>' +
           '<h3 style="margin-top:14px">Conversation</h3>' +
-          messagesFeed(d.messages, c.name) +
+          '<div class="founder-conv-feed">' + messagesFeed(d.messages, c.name) + '</div>' +
           '<form id="founderMsgForm" style="margin-top:12px"><label class="field" for="founderMsg">Reply to ' + esc(c.name) + '</label>' +
           '<textarea id="founderMsg" maxlength="5000" placeholder="Write a reply..." required></textarea>' +
           '<div style="margin-top:10px"><button type="submit" class="btn ghost">Send reply</button></div></form>' +
@@ -2784,6 +2891,7 @@
                later sign-in on this browser starts from an empty, role-less
                state and must be re-authorized by the server. */
             enteredUserId = null;
+            stopRealtime();
             S.user = null;
             S.profile = null;
             S.role = "client";
@@ -2792,6 +2900,8 @@
             S.myClient = null;
             S.detail = null;
             S.detailProjectId = null;
+            S.msgWatermark = null;
+            S.seenIncoming = {};
             S.selClientId = null;
             S.selProjectId = null;
             S.filter = "All";
