@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>NovaStack Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f3f5f2;
+        --card: #ffffff;
+        --card-2: #eef1ec;
+        --ink: #16191d;
+        --ink-2: #454e57;
+        --muted: #6b7680;
+        --line: #dde3dc;
+        --brand: #c2410c;
+        --brand-strong: #a83708;
+        --brand-soft: #fdeee3;
+        --green: #177a4c;
+        --green-soft: #e2f3e9;
+        --amber: #9a6206;
+        --amber-soft: #fdf0d7;
+        --red: #b3352b;
+        --red-soft: #fbe7e4;
+        --ring-track: #e4e9e2;
+        --shadow: 0 1px 2px rgba(20, 26, 20, .05), 0 8px 24px rgba(20, 26, 20, .05);
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e1113;
+          --card: #171b1e;
+          --card-2: #1e2427;
+          --ink: #edf1ec;
+          --ink-2: #c3ccc5;
+          --muted: #93a099;
+          --line: #29302d;
+          --brand: #f0732f;
+          --brand-strong: #ff8a4d;
+          --brand-soft: #3a2113;
+          --green: #45bd82;
+          --green-soft: #143527;
+          --amber: #e5a83d;
+          --amber-soft: #3a2c10;
+          --red: #e8736a;
+          --red-soft: #3c1d1a;
+          --ring-track: #262d2a;
+          --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px rgba(0, 0, 0, .3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: 15.5px;
+        line-height: 1.5;
+      }
+      h1, h2, h3 { font-family: "Sora", "Manrope", sans-serif; margin: 0; line-height: 1.2; }
+      p { margin: 0; }
+      a { color: var(--brand); }
+      button, input, select, textarea { font: inherit; color: inherit; }
+      button { cursor: pointer; }
+      button:disabled { opacity: .6; cursor: default; }
+      :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 18px 64px; }
+
+      /* ---------- generic cards ---------- */
+      .card {
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px;
+      }
+      .card h3 { font-size: 16px; margin-bottom: 4px; }
+      .card .sub { color: var(--muted); font-size: 13.5px; }
+      .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+
+      .chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 4px 11px; white-space: nowrap;
+      }
+      .chip.brand { background: var(--brand-soft); color: var(--brand); }
+      .chip.green { background: var(--green-soft); color: var(--green); }
+      .chip.amber { background: var(--amber-soft); color: var(--amber); }
+      .chip.grey { background: var(--card-2); color: var(--ink-2); }
+      .chip.red { background: var(--red-soft); color: var(--red); }
+
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        border: 0; border-radius: 10px; padding: 10px 18px; min-height: 42px;
+        font-weight: 700; font-size: 14.5px; background: var(--brand); color: #fff;
+        transition: background .15s ease; text-decoration: none;
+      }
+      .btn:hover { background: var(--brand-strong); }
+      @media (prefers-color-scheme: dark) { .btn { color: #181006; } .btn:hover { color: #181006; } }
+      .btn.ghost { background: var(--card-2); color: var(--ink); border: 1px solid var(--line); }
+      .btn.ghost:hover { background: var(--line); }
+      .btn.small { min-height: 36px; padding: 7px 13px; font-size: 13.5px; border-radius: 8px; }
+      .btn.danger { background: var(--red-soft); color: var(--red); border: 1px solid var(--line); }
+      .btn.danger:hover { background: var(--red-soft); }
+
+      label.field { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+      input[type="text"], input[type="number"], input[type="search"], input[type="email"],
+      input[type="password"], input[type="url"], select, textarea {
+        width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+        padding: 10px 12px; min-height: 42px; font-size: 15px;
+      }
+      textarea { resize: vertical; min-height: 84px; }
+      input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: 0; border-color: transparent; }
+
+      /* ---------- auth ---------- */
+      .auth-wrap { max-width: 460px; margin: 5vh auto 0; }
+      .auth-wrap h1 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+      .auth-wrap .intro { color: var(--ink-2); margin-top: 8px; font-size: 15px; }
+      .seg {
+        display: inline-flex; background: var(--card-2); border: 1px solid var(--line);
+        border-radius: 999px; padding: 4px; gap: 4px; margin: 18px 0 4px;
+      }
+      .seg button {
+        border: 0; background: transparent; border-radius: 999px; padding: 9px 18px;
+        font-weight: 700; font-size: 14.5px; color: var(--ink-2); min-height: 40px;
+      }
+      .seg button.active { background: var(--ink); color: var(--bg); }
+      .auth-msg { border-radius: 10px; padding: 11px 14px; font-size: 14px; font-weight: 600; margin-top: 14px; display: none; }
+      .auth-msg.err { display: block; background: var(--red-soft); color: var(--red); }
+      .auth-msg.ok { display: block; background: var(--green-soft); color: var(--green); }
+      .auth-note { color: var(--muted); font-size: 13.5px; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+      /* ---------- app bar ---------- */
+      .controlbar {
+        display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .userbox { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0; }
+      .userbox .who { font-weight: 800; font-size: 15.5px; overflow-wrap: anywhere; }
+      .userbox .mail { color: var(--muted); font-size: 13.5px; font-weight: 600; }
+      .bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+      .notice {
+        border: 1px solid var(--amber); background: var(--amber-soft); color: var(--ink);
+        border-radius: var(--radius); padding: 16px 18px; margin-bottom: 16px; font-size: 14.5px;
+      }
+      .notice strong { display: block; margin-bottom: 4px; }
+      .notice code {
+        display: block; font-family: "IBM Plex Mono", monospace; font-size: 13px;
+        background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+        padding: 10px 12px; margin: 10px 0; overflow-wrap: anywhere; white-space: pre-wrap;
+      }
+
+      .loading-card { text-align: center; color: var(--muted); font-weight: 600; padding: 44px 20px; }
+
+      /* ---------- client view ---------- */
+      .hero-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; margin-bottom: 16px; }
+      .project-title { font-size: clamp(24px, 4vw, 32px); font-weight: 800; letter-spacing: -.01em; }
+      .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+      .fact-row { display: flex; flex-wrap: wrap; gap: 22px; border-top: 1px solid var(--line); padding-top: 14px; }
+      .fact .k { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+      .fact .v { font-weight: 700; font-size: 15px; margin-top: 2px; }
+
+      .ring-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
+      .ring-wrap { position: relative; width: 148px; height: 148px; }
+      .ring-wrap svg { transform: rotate(-90deg); }
+      .ring-bg { stroke: var(--ring-track); }
+      .ring-fg { stroke: var(--brand); transition: stroke-dashoffset .5s ease; }
+      .ring-num {
+        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .ring-num .pct { font-family: "Sora", sans-serif; font-size: 34px; font-weight: 800; line-height: 1; }
+      .ring-num .of { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+      .ring-note { font-size: 13.5px; color: var(--ink-2); font-weight: 600; }
+
+      .main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+      .stack { display: grid; gap: 16px; }
+
+      /* milestones */
+      .ms-list { list-style: none; margin: 6px 0 0; padding: 0; }
+      .ms-item { display: flex; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+      .ms-item:last-child { border-bottom: 0; padding-bottom: 2px; }
+      .ms-dot {
+        flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; margin-top: 1px;
+        border: 2px solid var(--line); color: var(--muted); background: var(--card);
+      }
+      .ms-item.done .ms-dot { background: var(--green); border-color: var(--green); color: #fff; }
+      .ms-item.in_progress .ms-dot { border-color: var(--brand); color: var(--brand); }
+      .ms-item.in_progress .ms-dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); }
+      .ms-body { flex: 1; min-width: 0; }
+      .ms-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+      .ms-name { font-weight: 700; font-size: 15.5px; }
+      .ms-item.pending .ms-name { color: var(--muted); }
+      .ms-date { font-size: 13px; color: var(--muted); margin-top: 1px; }
+
+      /* progress bar */
+      .bar { height: 10px; border-radius: 999px; background: var(--ring-track); overflow: hidden; }
+      .bar > div { height: 100%; background: var(--brand); border-radius: 999px; transition: width .5s ease; }
+      .bar > div.full { background: var(--green); }
+
+      /* feed + conversation */
+      .feed { list-style: none; margin: 4px 0 0; padding: 0; }
+      .feed li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .feed li:last-child { border-bottom: 0; padding-bottom: 2px; }
+      .avatar {
+        flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: "Sora", sans-serif; font-weight: 700; font-size: 13px;
+        background: var(--brand-soft); color: var(--brand);
+      }
+      .avatar.client { background: var(--green-soft); color: var(--green); }
+      .feed .who { font-weight: 700; font-size: 14px; }
+      .feed .when { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+      .feed .txt { font-size: 14.5px; color: var(--ink-2); margin-top: 2px; overflow-wrap: anywhere; }
+      .feed .ttl { font-weight: 700; font-size: 14.5px; margin-top: 1px; }
+
+      /* payments */
+      .pay-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 0 14px; }
+      .pay-num { background: var(--card-2); border-radius: 10px; padding: 11px 12px; }
+      .pay-num .k { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+      .pay-num .v { font-family: "Sora", sans-serif; font-weight: 700; font-size: 16.5px; margin-top: 3px; }
+      .pay-num .v.due { color: var(--brand); }
+      .inv-list { list-style: none; margin: 10px 0 0; padding: 0; }
+      .inv-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+      .inv-list li:last-child { border-bottom: 0; }
+      .inv-list .amt { font-weight: 700; white-space: nowrap; }
+      .inv-list .lbl { min-width: 0; overflow-wrap: anywhere; }
+      .inv-list .dt { color: var(--muted); font-size: 12.5px; display: block; }
+
+      /* deliverables */
+      .dl-list { list-style: none; margin: 4px 0 0; padding: 0; }
+      .dl-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+      .dl-list li:last-child { border-bottom: 0; padding-bottom: 2px; }
+      .dl-ic {
+        flex: 0 0 auto; width: 36px; height: 36px; border-radius: 9px; background: var(--card-2);
+        display: flex; align-items: center; justify-content: center; color: var(--ink-2);
+      }
+      .dl-body { flex: 1; min-width: 0; }
+      .dl-name { font-weight: 700; font-size: 14.5px; overflow-wrap: anywhere; }
+      .dl-meta { font-size: 12.5px; color: var(--muted); }
+
+      .next-step { border-color: var(--amber); }
+      .next-step p { font-size: 15px; color: var(--ink-2); }
+
+      .empty-state { text-align: center; padding: 40px 24px; }
+      .empty-state h2 { font-size: 21px; font-weight: 800; }
+      .empty-state p { color: var(--ink-2); max-width: 520px; margin: 10px auto 0; font-size: 15px; }
+
+      /* ---------- founder view ---------- */
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+      .stat { padding: 16px 18px; }
+      .stat .k { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+      .stat .v { font-family: "Sora", sans-serif; font-size: 27px; font-weight: 800; margin-top: 4px; line-height: 1.1; }
+      .stat .s { font-size: 13px; color: var(--ink-2); margin-top: 3px; font-weight: 600; }
+
+      .founder-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 16px; align-items: start; }
+      .filters { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 6px; }
+      .filters button {
+        border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+        padding: 7px 13px; min-height: 36px; font-size: 13px; font-weight: 700; color: var(--ink-2);
+      }
+      .filters button.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+      .client-rows { list-style: none; margin: 6px 0 0; padding: 0; }
+      .client-row {
+        width: 100%; text-align: left; border: 1px solid var(--line); background: var(--card);
+        border-radius: 12px; padding: 13px 14px; margin-top: 10px; display: block;
+      }
+      .client-row:hover { border-color: var(--muted); }
+      .client-row.selected { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+      .client-row .r1 { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+      .client-row .nm { font-weight: 800; font-size: 15.5px; }
+      .client-row .sv { font-size: 13px; color: var(--muted); margin-top: 1px; }
+      .client-row .mini-bar { margin-top: 10px; }
+      .client-row .r3 { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 600; margin-top: 6px; }
+
+      .manage-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+      .ms-edit { list-style: none; margin: 4px 0 0; padding: 0; }
+      .ms-edit li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .ms-edit li:last-child { border-bottom: 0; }
+      .ms-edit .nm { font-weight: 700; font-size: 15px; }
+      .ms-edit .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+      .status-btns { display: inline-flex; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; margin-top: 8px; }
+      .status-btns button { border: 0; background: transparent; border-radius: 999px; padding: 6px 12px; min-height: 34px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+      .status-btns button.on-done { background: var(--green); color: #fff; }
+      .status-btns button.on-active { background: var(--brand); color: #fff; }
+      .status-btns button.on-pending { background: var(--ink); color: var(--bg); }
+      .form-grid { display: grid; gap: 12px; }
+      .form-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+      .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .divider { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+      .empty { color: var(--muted); font-size: 14px; padding: 14px 0 4px; }
+
+      /* toast */
+      #toast {
+        position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 16px);
+        background: var(--ink); color: var(--bg); font-weight: 700; font-size: 14px;
+        padding: 12px 20px; border-radius: 999px; box-shadow: var(--shadow);
+        opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+        max-width: calc(100vw - 32px); text-align: center; z-index: 50;
+      }
+      #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+      @media (max-width: 900px) {
+        .hero-grid, .main-grid, .founder-grid { grid-template-columns: 1fr; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .ring-card { padding: 24px 20px; }
+      }
+      @media (max-width: 520px) {
+        .wrap { padding: 14px 12px 56px; }
+        .pay-nums { grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+        .pay-num .v { font-size: 14px; }
+        .form-row, .form-2col { grid-template-columns: 1fr; }
+        .form-row .btn { width: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ring-fg, .bar > div, #toast { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- ================= AUTH ================= -->
+      <section id="authView" class="auth-wrap" aria-label="Sign in" hidden>
+        <div class="card">
+          <h1>NovaStack Dashboard</h1>
+          <p class="intro">Sign in to see your project progress, updates, deliverables and payments.</p>
+          <div class="seg" role="tablist" aria-label="Sign in or create account">
+            <button type="button" id="modeSignin" class="active" role="tab" aria-selected="true">Sign in</button>
+            <button type="button" id="modeSignup" role="tab" aria-selected="false">Create account</button>
+          </div>
+          <form id="authForm" class="form-grid" style="margin-top:12px">
+            <div id="nameField" hidden>
+              <label class="field" for="authName">Your name</label>
+              <input type="text" id="authName" autocomplete="name" placeholder="e.g. Ayesha Khan" />
+            </div>
+            <div>
+              <label class="field" for="authEmail">Email</label>
+              <input type="email" id="authEmail" autocomplete="email" required placeholder="you@example.com" />
+            </div>
+            <div>
+              <label class="field" for="authPass">Password</label>
+              <input type="password" id="authPass" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters" />
+            </div>
+            <button type="submit" class="btn" id="authSubmit">Sign in</button>
+          </form>
+          <p class="auth-msg" id="authMsg" role="status"></p>
+          <p class="auth-note">Clients: create your account with the same email address you gave NovaStack for your project. Your dashboard is linked to that email, and you will only ever see your own project.</p>
+        </div>
+      </section>
+
+      <!-- ================= LOADING ================= -->
+      <div id="loadingView" class="card loading-card" hidden>Loading your dashboard...</div>
+
+      <!-- ================= APP ================= -->
+      <div id="appView" hidden>
+        <div class="controlbar">
+          <div class="userbox">
+            <span class="who" id="userName"></span>
+            <span class="chip brand" id="userRole"></span>
+            <span class="mail" id="userMail"></span>
+          </div>
+          <div class="bar-actions">
+            <button type="button" class="btn ghost small" id="refreshBtn">Refresh</button>
+            <button type="button" class="btn ghost small" id="signOutBtn">Sign out</button>
+          </div>
+        </div>
+
+        <div id="founderNotice"></div>
+        <div id="loadError"></div>
+
+        <!-- ================= CLIENT VIEW ================= -->
+        <section id="clientView" aria-label="Your project" hidden>
+          <div id="clientContent"></div>
+        </section>
+
+        <!-- ================= FOUNDER VIEW ================= -->
+        <section id="founderView" aria-label="Founder dashboard" hidden>
+          <div class="stats" id="statsRow"></div>
+          <div class="founder-grid">
+            <div class="stack">
+              <div class="card">
+                <div class="card-head">
+                  <div>
+                    <h3>All clients</h3>
+                    <p class="sub" id="clientCount"></p>
+                  </div>
+                </div>
+                <input type="search" id="clientSearch" placeholder="Search by client, company or service" aria-label="Search clients" />
+                <div class="filters" id="statusFilters" role="group" aria-label="Filter by project status"></div>
+                <ul class="client-rows" id="clientRows"></ul>
+                <p class="empty" id="noClients" hidden>No clients match this search.</p>
+              </div>
+
+              <div class="card">
+                <h3>Add a client</h3>
+                <p class="sub">Creates the client, their first project and a standard milestone plan. The client sees the project when they sign in with this email.</p>
+                <form id="addClientForm" class="form-grid" style="margin-top:14px">
+                  <div>
+                    <label class="field" for="ncName">Client or business name</label>
+                    <input type="text" id="ncName" required placeholder="e.g. Bloom Bakery" />
+                  </div>
+                  <div>
+                    <label class="field" for="ncEmail">Client login email</label>
+                    <input type="email" id="ncEmail" required placeholder="client@example.com" />
+                  </div>
+                  <div class="form-2col">
+                    <div>
+                      <label class="field" for="ncCompany">Company (optional)</label>
+                      <input type="text" id="ncCompany" placeholder="e.g. Bloom Bakery (Pvt) Ltd" />
+                    </div>
+                    <div>
+                      <label class="field" for="ncPhone">Phone (optional)</label>
+                      <input type="text" id="ncPhone" placeholder="e.g. 0300 1234567" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="field" for="ncService">Service</label>
+                    <select id="ncService"></select>
+                  </div>
+                  <div>
+                    <label class="field" for="ncTitle">Project title</label>
+                    <input type="text" id="ncTitle" required placeholder="e.g. Bakery website and online ordering" />
+                  </div>
+                  <div>
+                    <label class="field" for="ncPrice">Project value (PKR)</label>
+                    <input type="number" id="ncPrice" required min="0" step="any" placeholder="e.g. 150000" />
+                  </div>
+                  <button type="submit" class="btn">Add client and project</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="card" id="managePanel"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+      "use strict";
+
+      var SUPABASE_URL = "https://ahrcawizoyycsjharjkc.supabase.co";
+      var SUPABASE_KEY = "sb_publishable_zkUPWLMzvNBtqnzDd5rrVQ_zergutBK";
+      var FOUNDER_EMAIL = "hammadkhalil.me@gmail.com";
+
+      var SERVICES = [
+        "Websites & Web Apps",
+        "Mobile App Development",
+        "AI Calling Agents",
+        "n8n Automation",
+        "Shopify Stores",
+        "WordPress",
+        "Meta Ads",
+        "Technical SEO",
+        "Custom Full Stack"
+      ];
+
+      var MILESTONE_PLANS = {
+        "Websites & Web Apps": ["Discovery and brief", "Design mockups", "Development", "Content and review", "Launch"],
+        "Mobile App Development": ["Discovery and brief", "UI design", "App development", "Testing and fixes", "Store submission"],
+        "AI Calling Agents": ["Call flow design", "Voice and script setup", "Number and CRM connection", "Test calls", "Go live"],
+        "Shopify Stores": ["Store setup", "Theme design", "Products and payments", "Review and revisions", "Launch"],
+        "default": ["Discovery and brief", "Design", "Build", "Review and revisions", "Launch and handover"]
+      };
+
+      var PSTATUS = {
+        in_progress: { label: "In progress", chip: "brand" },
+        review: { label: "In review", chip: "amber" },
+        waiting_on_client: { label: "Waiting on client", chip: "amber" },
+        completed: { label: "Completed", chip: "green" }
+      };
+
+      var S = {
+        user: null,
+        profile: null,
+        role: "client",
+        clients: [],
+        projects: [],
+        myClient: null,
+        detail: null,
+        detailProjectId: null,
+        selClientId: null,
+        selProjectId: null,
+        filter: "All",
+        search: ""
+      };
+
+      /* ---------- helpers ---------- */
+      function $(id) { return document.getElementById(id); }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+      function money(n, cur) {
+        return (cur || "PKR") + " " + Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+      }
+      function fmtDate(d) {
+        if (!d) return "";
+        var dt = new Date(d);
+        if (isNaN(dt.getTime())) return "";
+        return dt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      }
+      function initials(name) {
+        return String(name || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join("");
+      }
+      var toastTimer = null;
+      function toast(msg) {
+        var t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2800);
+      }
+      function errText(e) {
+        if (!e) return "Something went wrong. Please try again.";
+        var m = e.message || String(e);
+        if (/invalid login credentials/i.test(m)) return "Email or password is not correct.";
+        if (/already registered/i.test(m)) return "An account with this email already exists. Sign in instead.";
+        if (/email not confirmed/i.test(m)) return "Please confirm your email first, then sign in.";
+        return m;
+      }
+      function unwrap(res) {
+        if (res.error) throw res.error;
+        return res.data;
+      }
+      function statusChip(st) {
+        var meta = PSTATUS[st] || { label: st || "", chip: "grey" };
+        return '<span class="chip ' + meta.chip + '">' + esc(meta.label) + "</span>";
+      }
+      function msChip(st) {
+        if (st === "done") return '<span class="chip green">Done</span>';
+        if (st === "in_progress") return '<span class="chip brand">In progress</span>';
+        return '<span class="chip grey">Pending</span>';
+      }
+      function projectOf(clientId) {
+        for (var i = 0; i < S.projects.length; i++) if (S.projects[i].client_id === clientId) return S.projects[i];
+        return null;
+      }
+      function clientOf(id) {
+        for (var i = 0; i < S.clients.length; i++) if (S.clients[i].id === id) return S.clients[i];
+        return null;
+      }
+      function paidOf(detail, project) {
+        if (!detail) return 0;
+        return detail.payments.reduce(function (sum, p) { return p.status === "paid" ? sum + Number(p.amount || 0) : sum; }, 0);
+      }
+      function progressFromMilestones(list) {
+        if (!list.length) return 0;
+        var score = 0;
+        list.forEach(function (m) {
+          if (m.status === "done") score += 1;
+          else if (m.status === "in_progress") score += 0.5;
+        });
+        return Math.round((score / list.length) * 100);
+      }
+      function safeUrl(u) {
+        var s = String(u || "").trim();
+        return /^https?:\/\//i.test(s) ? s : "";
+      }
+
+      /* ---------- supabase client ---------- */
+      var sb = null;
+      if (window.supabase && window.supabase.createClient) {
+        try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch (e) { sb = null; }
+      }
+
+      /* ---------- view switching ---------- */
+      function showOnly(id) {
+        ["authView", "loadingView", "appView"].forEach(function (v) { $(v).hidden = v !== id; });
+      }
+
+      /* ---------- auth ---------- */
+      var authMode = "signin";
+      function setAuthMode(mode) {
+        authMode = mode;
+        $("modeSignin").classList.toggle("active", mode === "signin");
+        $("modeSignup").classList.toggle("active", mode === "signup");
+        $("modeSignin").setAttribute("aria-selected", mode === "signin" ? "true" : "false");
+        $("modeSignup").setAttribute("aria-selected", mode === "signup" ? "true" : "false");
+        $("nameField").hidden = mode !== "signup";
+        $("authName").required = mode === "signup";
+        $("authPass").setAttribute("autocomplete", mode === "signup" ? "new-password" : "current-password");
+        $("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
+        setAuthMsg("", "");
+      }
+      function setAuthMsg(msg, kind) {
+        var el = $("authMsg");
+        el.textContent = msg;
+        el.className = "auth-msg" + (kind ? " " + kind : "");
+      }
+
+      $("modeSignin").addEventListener("click", function () { setAuthMode("signin"); });
+      $("modeSignup").addEventListener("click", function () { setAuthMode("signup"); });
+
+      $("authForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        if (!sb) { setAuthMsg("Sign-in could not load. Check your connection and reload the page.", "err"); return; }
+        var email = $("authEmail").value.trim();
+        var pass = $("authPass").value;
+        var btn = $("authSubmit");
+        btn.disabled = true;
+        btn.textContent = "Please wait...";
+        setAuthMsg("", "");
+        var done = function () {
+          btn.disabled = false;
+          btn.textContent = authMode === "signup" ? "Create account" : "Sign in";
+        };
+        if (authMode === "signup") {
+          var name = $("authName").value.trim();
+          sb.auth.signUp({ email: email, password: pass, options: { data: { full_name: name } } })
+            .then(function (r) {
+              done();
+              if (r.error) { setAuthMsg(errText(r.error), "err"); return; }
+              if (!r.data.session) {
+                setAuthMode("signin");
+                setAuthMsg("Account created. If email confirmation is on, confirm your email first, then sign in.", "ok");
+              }
+            })
+            .catch(function (e) { done(); setAuthMsg(errText(e), "err"); });
+        } else {
+          sb.auth.signInWithPassword({ email: email, password: pass })
+            .then(function (r) {
+              done();
+              if (r.error) setAuthMsg(errText(r.error), "err");
+            })
+            .catch(function (e) { done(); setAuthMsg(errText(e), "err"); });
+        }
+      });
+
+      $("signOutBtn").addEventListener("click", function () {
+        if (sb) sb.auth.signOut();
+      });
+      $("refreshBtn").addEventListener("click", function () {
+        if (S.user) enterApp(S.user, true);
+      });
+
+      /* ---------- data loading ---------- */
+      function loadDetail(projectId) {
+        if (!projectId) { S.detail = null; S.detailProjectId = null; return Promise.resolve(); }
+        return Promise.all([
+          sb.from("milestones").select("*").eq("project_id", projectId).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
+          sb.from("updates").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
+          sb.from("payments").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
+          sb.from("deliverables").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
+          sb.from("messages").select("*").eq("project_id", projectId).order("created_at", { ascending: true })
+        ]).then(function (rs) {
+          S.detail = {
+            milestones: unwrap(rs[0]) || [],
+            updates: unwrap(rs[1]) || [],
+            payments: unwrap(rs[2]) || [],
+            deliverables: unwrap(rs[3]) || [],
+            messages: unwrap(rs[4]) || []
+          };
+          S.detailProjectId = projectId;
+        });
+      }
+
+      function loadFounderData() {
+        return Promise.all([
+          sb.from("clients").select("*").order("created_at", { ascending: false }),
+          sb.from("projects").select("*").order("created_at", { ascending: false })
+        ]).then(function (rs) {
+          S.clients = unwrap(rs[0]) || [];
+          S.projects = unwrap(rs[1]) || [];
+          if (!clientOf(S.selClientId)) {
+            S.selClientId = S.clients.length ? S.clients[0].id : null;
+          }
+          var p = S.selClientId ? projectOf(S.selClientId) : null;
+          S.selProjectId = p ? p.id : null;
+          return loadDetail(S.selProjectId);
+        });
+      }
+
+      function loadClientData() {
+        return Promise.all([
+          sb.from("clients").select("*"),
+          sb.from("projects").select("*").order("created_at", { ascending: true })
+        ]).then(function (rs) {
+          var rows = unwrap(rs[0]) || [];
+          S.myClient = rows.length ? rows[0] : null;
+          S.projects = unwrap(rs[1]) || [];
+          var stillThere = false;
+          S.projects.forEach(function (p) { if (p.id === S.selProjectId) stillThere = true; });
+          if (!stillThere) S.selProjectId = S.projects.length ? S.projects[0].id : null;
+          return loadDetail(S.selProjectId);
+        });
+      }
+
+      function showLoadError(e) {
+        $("loadError").innerHTML =
+          '<div class="notice"><strong>Could not load data</strong>' +
+          esc(errText(e)) + ' <button type="button" class="btn ghost small" id="retryBtn" style="margin-left:8px">Retry</button></div>';
+        $("retryBtn").addEventListener("click", function () { if (S.user) enterApp(S.user, true); });
+      }
+
+      var entering = false;
+      var enteredUserId = null;
+      function enterApp(user, force) {
+        if (entering) return Promise.resolve();
+        if (!force && enteredUserId === user.id) return Promise.resolve();
+        entering = true;
+        S.user = user;
+        showOnly("loadingView");
+        return sb.from("profiles").select("*").eq("id", user.id).maybeSingle()
+          .then(function (r) {
+            if (r.error) throw r.error;
+            S.profile = r.data || {
+              id: user.id,
+              email: user.email,
+              full_name: (user.user_metadata && user.user_metadata.full_name) || "",
+              role: "client"
+            };
+            S.role = S.profile.role === "founder" ? "founder" : "client";
+            return S.role === "founder" ? loadFounderData() : loadClientData();
+          })
+          .then(function () {
+            enteredUserId = user.id;
+            entering = false;
+            renderApp();
+          })
+          .catch(function (e) {
+            entering = false;
+            enteredUserId = user.id;
+            renderApp();
+            showLoadError(e);
+          });
+      }
+
+      function renderApp() {
+        showOnly("appView");
+        var displayName = (S.profile && S.profile.full_name) || (S.myClient && S.myClient.name) || "";
+        $("userName").textContent = displayName || "NovaStack Dashboard";
+        $("userMail").textContent = S.user ? S.user.email : "";
+        var roleEl = $("userRole");
+        roleEl.textContent = S.role === "founder" ? "Founder" : "Client";
+        roleEl.className = "chip " + (S.role === "founder" ? "brand" : "green");
+        $("loadError").innerHTML = "";
+        renderFounderNotice();
+        $("clientView").hidden = S.role !== "client";
+        $("founderView").hidden = S.role !== "founder";
+        if (S.role === "founder") renderFounderView();
+        else renderClientView();
+      }
+
+      function renderFounderNotice() {
+        var el = $("founderNotice");
+        if (S.user && S.user.email === FOUNDER_EMAIL && S.role !== "founder") {
+          el.innerHTML =
+            '<div class="notice"><strong>One setup step left for the founder account</strong>' +
+            "You are signed in with the founder email, but this account is still marked as a client in the database, so you are seeing the client view. Run this once in Supabase (SQL Editor, paste, Run), then sign out and back in:" +
+            "<code>update public.profiles set role = 'founder' where email = '" + FOUNDER_EMAIL + "';</code>" +
+            "After that, this account will see and manage all clients and projects.</div>";
+        } else {
+          el.innerHTML = "";
+        }
+      }
+
+      /* ---------- shared render pieces ---------- */
+      function feedItem(who, isClient, when, title, text) {
+        return "<li>" +
+          '<span class="avatar' + (isClient ? " client" : "") + '">' + esc(initials(who)) + "</span>" +
+          "<div><span class=\"who\">" + esc(who) + '</span> <span class="when">· ' + esc(when) + "</span>" +
+          (title ? '<p class="ttl">' + esc(title) + "</p>" : "") +
+          (text ? '<p class="txt">' + esc(text) + "</p>" : "") +
+          "</div></li>";
+      }
+      function updatesFeed(updates, clientName) {
+        if (!updates.length) return '<p class="empty">No updates yet.</p>';
+        return '<ul class="feed">' + updates.map(function (u) {
+          var isClient = u.author_role === "client";
+          return feedItem(isClient ? (clientName || "Client") : "NovaStack", isClient, fmtDate(u.created_at), u.title, u.body);
+        }).join("") + "</ul>";
+      }
+      function messagesFeed(messages, clientName) {
+        if (!messages.length) return '<p class="empty">No messages yet. Start the conversation below.</p>';
+        return '<ul class="feed">' + messages.map(function (m) {
+          var isClient = m.sender_role === "client";
+          return feedItem(isClient ? (clientName || "Client") : "NovaStack", isClient, fmtDate(m.created_at), "", m.body);
+        }).join("") + "</ul>";
+      }
+      function paymentsCard(project, detail, forFounder) {
+        var total = Number(project.total_amount || 0);
+        var paid = paidOf(detail, project);
+        var remaining = Math.max(total - paid, 0);
+        var pctPaid = total > 0 ? Math.min(Math.round((paid / total) * 100), 100) : 0;
+        var rows = detail.payments.length ? detail.payments.map(function (p) {
+          var chip = p.status === "paid" ? '<span class="chip green">Paid</span>' : '<span class="chip amber">Pending</span>';
+          var label = p.note || p.method || "Payment";
+          var when = fmtDate(p.paid_at || p.created_at);
+          var action = "";
+          if (forFounder && p.status !== "paid") {
+            action = ' <button type="button" class="btn ghost small" data-mark-paid="' + p.id + '">Mark paid</button>';
+          }
+          return "<li><span class=\"lbl\">" + esc(label) + (when ? '<span class="dt">' + esc(when) + (p.method && p.note ? " · " + esc(p.method) : "") + "</span>" : "") + '</span>' +
+            '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="amt">' + money(p.amount, project.currency) + "</span>" + chip + action + "</span></li>";
+        }).join("") : '<li><p class="empty">No payments recorded yet.</p></li>';
+        return '<div class="card"><h3>Payments</h3>' +
+          '<div class="pay-nums">' +
+            '<div class="pay-num"><p class="k">Total</p><p class="v">' + money(total, project.currency) + "</p></div>" +
+            '<div class="pay-num"><p class="k">Paid</p><p class="v">' + money(paid, project.currency) + "</p></div>" +
+            '<div class="pay-num"><p class="k">Remaining</p><p class="v due">' + money(remaining, project.currency) + "</p></div>" +
+          "</div>" +
+          '<div class="bar"><div style="width:' + pctPaid + '%" class="' + (remaining === 0 && total > 0 ? "full" : "") + '"></div></div>' +
+          '<ul class="inv-list">' + rows + "</ul></div>";
+      }
+      function deliverablesCard(detail, forFounder) {
+        var items = detail.deliverables.length ? detail.deliverables.map(function (d) {
+          var url = safeUrl(d.url);
+          var meta = [d.kind, fmtDate(d.created_at) ? "Shared " + fmtDate(d.created_at) : ""].filter(Boolean).join(" · ");
+          var action = url
+            ? '<a class="btn ghost small" href="' + esc(url) + '" target="_blank" rel="noopener">Open</a>'
+            : "";
+          if (forFounder) {
+            action += ' <button type="button" class="btn danger small" data-del-deliverable="' + d.id + '">Remove</button>';
+          }
+          return "<li>" +
+            '<span class="dl-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>' +
+            '<div class="dl-body"><p class="dl-name">' + esc(d.title) + '</p><p class="dl-meta">' + esc(meta) + "</p></div>" +
+            '<span style="display:flex;gap:8px;flex-wrap:wrap">' + action + "</span></li>";
+        }).join("") : '<li><p class="empty">Nothing shared yet.</p></li>';
+        return '<div class="card"><h3>Deliverables</h3><p class="sub">Files and links shared for this project.</p>' +
+          '<ul class="dl-list">' + items + "</ul></div>";
+      }
+
+      /* ---------- client view ---------- */
+      function currentProject() {
+        for (var i = 0; i < S.projects.length; i++) if (S.projects[i].id === S.selProjectId) return S.projects[i];
+        return S.projects.length ? S.projects[0] : null;
+      }
+
+      function renderClientView() {
+        var box = $("clientContent");
+        var project = currentProject();
+        if (!project || !S.detail) {
+          box.innerHTML =
+            '<div class="card empty-state"><h2>No project linked yet</h2>' +
+            "<p>Your account (" + esc(S.user ? S.user.email : "") + ") does not have a project yet. NovaStack links your project to the email address you signed in with. If you were expecting a project here, check that you used the same email you gave NovaStack, or email " +
+            '<a href="mailto:contact@novastackltd.com">contact@novastackltd.com</a> and we will link it for you.</p></div>';
+          return;
+        }
+        var d = S.detail;
+        var clientName = (S.myClient && S.myClient.name) || (S.profile && S.profile.full_name) || "Client";
+        var pct = Math.max(0, Math.min(100, Number(project.progress || 0)));
+        var doneCount = d.milestones.filter(function (m) { return m.status === "done"; }).length;
+        var circ = 2 * Math.PI * 52;
+        var offset = circ - (pct / 100) * circ;
+
+        var projectPicker = "";
+        if (S.projects.length > 1) {
+          projectPicker = '<div style="margin-bottom:16px"><label class="field" for="projectPicker">Your projects</label>' +
+            '<select id="projectPicker" style="max-width:420px">' + S.projects.map(function (p) {
+              return '<option value="' + p.id + '"' + (p.id === project.id ? " selected" : "") + ">" + esc(p.title) + "</option>";
+            }).join("") + "</select></div>";
+        }
+
+        var milestones = d.milestones.length ? d.milestones.map(function (m) {
+          var icon = m.status === "done"
+            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
+            : "";
+          var dateLine = m.status === "done" && m.completed_at ? "Done " + fmtDate(m.completed_at)
+            : m.status === "in_progress" ? "In progress now"
+            : "Not started yet";
+          return '<li class="ms-item ' + m.status + '">' +
+            '<span class="ms-dot">' + icon + "</span>" +
+            '<div class="ms-body"><div class="ms-top"><span class="ms-name">' + esc(m.title) + "</span>" + msChip(m.status) + "</div>" +
+            '<p class="ms-date">' + esc(dateLine) + "</p></div></li>";
+        }).join("") : '<p class="empty">Milestones will appear here once NovaStack sets up your project plan.</p>';
+
+        var waitingCard = "";
+        if (project.status === "waiting_on_client") {
+          var latest = d.updates.length ? d.updates[0] : null;
+          waitingCard = '<div class="card next-step"><h3>We need something from you</h3>' +
+            '<p style="margin-top:8px">' + (latest && (latest.body || latest.title)
+              ? esc(latest.body || latest.title)
+              : "NovaStack is waiting on your input to continue. Check the latest update, or send a message below.") + "</p></div>";
+        }
+
+        box.innerHTML =
+          projectPicker +
+          '<div class="hero-grid">' +
+            '<div class="card">' +
+              '<p class="sub" style="font-weight:700">Welcome back, ' + esc(clientName) + "</p>" +
+              '<h1 class="project-title">' + esc(project.title) + "</h1>" +
+              '<div class="project-meta">' + (project.service ? '<span class="chip brand">' + esc(project.service) + "</span>" : "") + statusChip(project.status) + "</div>" +
+              '<div class="fact-row">' +
+                '<div class="fact"><p class="k">Started</p><p class="v">' + esc(fmtDate(project.start_date || project.created_at) || "To be confirmed") + "</p></div>" +
+                '<div class="fact"><p class="k">Milestones</p><p class="v">' + doneCount + " of " + d.milestones.length + " done</p></div>" +
+                '<div class="fact"><p class="k">Remaining work</p><p class="v">' + (100 - pct) + "%</p></div>" +
+              "</div>" +
+            "</div>" +
+            '<div class="card ring-card">' +
+              '<div class="ring-wrap">' +
+                '<svg width="148" height="148" viewBox="0 0 120 120" aria-hidden="true">' +
+                  '<circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="11"/>' +
+                  '<circle class="ring-fg" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + offset.toFixed(1) + '"/>' +
+                "</svg>" +
+                '<div class="ring-num"><span class="pct">' + pct + '%</span><span class="of">complete</span></div>' +
+              "</div>" +
+              '<p class="ring-note">' + (pct >= 100 ? "Project delivered" : (100 - pct) + "% of the work remaining") + "</p>" +
+            "</div>" +
+          "</div>" +
+
+          '<div class="main-grid">' +
+            '<div class="stack">' +
+              '<div class="card"><div class="card-head"><div><h3>Project milestones</h3><p class="sub">Where your project stands, step by step.</p></div></div>' +
+                '<ul class="ms-list">' + milestones + "</ul></div>" +
+              '<div class="card"><div class="card-head"><div><h3>Latest updates</h3><p class="sub">Progress posts from the NovaStack team.</p></div></div>' +
+                updatesFeed(d.updates, clientName) +
+              "</div>" +
+              '<div class="card"><div class="card-head"><div><h3>Conversation</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
+                messagesFeed(d.messages, clientName) +
+                '<hr class="divider" />' +
+                '<form id="clientMsgForm"><label class="field" for="clientMsg">Message NovaStack</label>' +
+                '<textarea id="clientMsg" placeholder="Ask a question or request a change..." required></textarea>' +
+                '<div style="margin-top:10px"><button type="submit" class="btn">Send message</button></div></form>' +
+              "</div>" +
+            "</div>" +
+            '<div class="stack">' +
+              waitingCard +
+              paymentsCard(project, d, false) +
+              deliverablesCard(d, false) +
+            "</div>" +
+          "</div>";
+
+        var picker = $("projectPicker");
+        if (picker) {
+          picker.addEventListener("change", function () {
+            S.selProjectId = this.value;
+            loadDetail(S.selProjectId).then(renderClientView).catch(function (e) { toast(errText(e)); });
+          });
+        }
+        $("clientMsgForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var text = $("clientMsg").value.trim();
+          if (!text) return;
+          var btn = ev.target.querySelector("button[type=submit]");
+          btn.disabled = true;
+          sb.from("messages").insert({ project_id: project.id, sender_role: "client", body: text })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return loadDetail(project.id);
+            })
+            .then(function () { renderClientView(); toast("Message sent to NovaStack."); })
+            .catch(function (e) { btn.disabled = false; toast(errText(e)); });
+        });
+      }
+
+      /* ---------- founder view ---------- */
+      function renderStats() {
+        var active = S.projects.filter(function (p) { return p.status !== "completed"; }).length;
+        var waiting = S.projects.filter(function (p) { return p.status === "waiting_on_client"; }).length;
+        $("statsRow").innerHTML =
+          '<div class="card stat"><p class="k">Total clients</p><p class="v">' + S.clients.length + '</p><p class="s">' + S.projects.length + " projects</p></div>" +
+          '<div class="card stat"><p class="k">Active projects</p><p class="v">' + active + '</p><p class="s">not yet completed</p></div>' +
+          '<div class="card stat"><p class="k">Waiting on client</p><p class="v">' + waiting + '</p><p class="s">projects need client input</p></div>' +
+          '<div class="card stat"><p class="k">Project value</p><p class="v">' + money(S.projects.reduce(function (s, p) { return s + Number(p.total_amount || 0); }, 0)) + '</p><p class="s">across all projects</p></div>';
+      }
+
+      var FILTERS = [
+        { key: "All", label: "All" },
+        { key: "in_progress", label: "In progress" },
+        { key: "review", label: "In review" },
+        { key: "waiting_on_client", label: "Waiting on client" },
+        { key: "completed", label: "Completed" },
+        { key: "none", label: "No project" }
+      ];
+      function renderFilters() {
+        $("statusFilters").innerHTML = FILTERS.map(function (f) {
+          return '<button type="button" data-filter="' + f.key + '"' + (S.filter === f.key ? ' class="active"' : "") + ">" + f.label + "</button>";
+        }).join("");
+        Array.prototype.forEach.call($("statusFilters").querySelectorAll("button"), function (b) {
+          b.addEventListener("click", function () {
+            S.filter = b.getAttribute("data-filter");
+            renderFilters();
+            renderClientRows();
+          });
+        });
+      }
+
+      function renderClientRows() {
+        var q = S.search.trim().toLowerCase();
+        var list = S.clients.filter(function (c) {
+          var p = projectOf(c.id);
+          var matchStatus = S.filter === "All" ||
+            (S.filter === "none" ? !p : (p && p.status === S.filter));
+          var hay = (c.name + " " + (c.company || "") + " " + (c.email || "") + " " + (p ? (p.service || "") + " " + p.title : "")).toLowerCase();
+          return matchStatus && (!q || hay.indexOf(q) > -1);
+        });
+        $("clientCount").textContent = S.clients.length
+          ? "Showing " + list.length + " of " + S.clients.length + " clients"
+          : "No clients yet";
+        $("noClients").hidden = list.length > 0 || S.clients.length === 0;
+        if (!S.clients.length) {
+          $("clientRows").innerHTML = '<li><p class="empty">No clients yet. Add your first client with the form below.</p></li>';
+          return;
+        }
+        $("clientRows").innerHTML = list.map(function (c) {
+          var p = projectOf(c.id);
+          if (!p) {
+            return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + c.id + '">' +
+              '<span class="r1"><span class="nm">' + esc(c.name) + '</span><span class="chip grey">No project</span></span>' +
+              '<span class="sv" style="display:block">' + esc(c.email) + "</span></button></li>";
+          }
+          var pct = Math.max(0, Math.min(100, Number(p.progress || 0)));
+          return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + c.id + '">' +
+            '<span class="r1"><span class="nm">' + esc(c.name) + "</span>" + statusChip(p.status) + "</span>" +
+            '<span class="sv" style="display:block">' + esc(p.title) + " · " + esc(c.email) + "</span>" +
+            '<span class="bar mini-bar" style="display:block"><span style="display:block;height:100%;width:' + pct + '%;border-radius:999px;background:' + (pct >= 100 ? "var(--green)" : "var(--brand)") + '"></span></span>' +
+            '<span class="r3"><span>' + pct + '% complete</span><span>' + money(p.total_amount, p.currency) + " value</span></span>" +
+            "</button></li>";
+        }).join("");
+        Array.prototype.forEach.call($("clientRows").querySelectorAll("[data-manage]"), function (b) {
+          b.addEventListener("click", function () {
+            S.selClientId = b.getAttribute("data-manage");
+            var p = projectOf(S.selClientId);
+            S.selProjectId = p ? p.id : null;
+            renderClientRows();
+            loadDetail(S.selProjectId).then(renderManagePanel).catch(function (e) { toast(errText(e)); });
+          });
+        });
+      }
+
+      function refreshFounder(keepPanel) {
+        return loadFounderData().then(function () {
+          renderStats();
+          renderFilters();
+          renderClientRows();
+          renderManagePanel();
+        });
+      }
+
+      function renderManagePanel() {
+        var panel = $("managePanel");
+        var c = clientOf(S.selClientId);
+        if (!c) {
+          panel.innerHTML = '<div class="empty-state"><h2>No client selected</h2><p>Add your first client using the form on the left. Their project, milestones, payments and messages will be managed here.</p></div>';
+          return;
+        }
+        var p = projectOf(c.id);
+        var head = '<div class="manage-head"><div><h3 style="font-size:19px">' + esc(c.name) + "</h3>" +
+          '<p class="sub">' + esc([c.company, c.email, c.phone].filter(Boolean).join(" · ")) + "</p></div>" +
+          (p ? statusChip(p.status) : '<span class="chip grey">No project</span>') + "</div>";
+
+        if (!p) {
+          panel.innerHTML = head +
+            '<hr class="divider" /><h3>Create a project for this client</h3>' +
+            '<form id="createProjectForm" class="form-grid" style="margin-top:12px">' +
+              '<div><label class="field" for="cpTitle">Project title</label><input type="text" id="cpTitle" required placeholder="e.g. Website redesign" /></div>' +
+              '<div><label class="field" for="cpService">Service</label><select id="cpService">' +
+                SERVICES.map(function (s) { return '<option value="' + esc(s) + '"' + (c.service === s ? " selected" : "") + ">" + esc(s) + "</option>"; }).join("") +
+              "</select></div>" +
+              '<div><label class="field" for="cpPrice">Project value (PKR)</label><input type="number" id="cpPrice" min="0" step="any" required placeholder="e.g. 150000" /></div>' +
+              '<button type="submit" class="btn">Create project</button></form>';
+          $("createProjectForm").addEventListener("submit", function (ev) {
+            ev.preventDefault();
+            createProject(c, $("cpTitle").value.trim(), $("cpService").value, Number($("cpPrice").value) || 0)
+              .then(function () { toast("Project created for " + c.name + "."); })
+              .catch(function (e) { toast(errText(e)); });
+          });
+          return;
+        }
+
+        var d = S.detail;
+        if (!d || S.detailProjectId !== p.id) {
+          panel.innerHTML = head + '<p class="empty">Loading project details...</p>';
+          loadDetail(p.id).then(renderManagePanel).catch(function (e) { toast(errText(e)); });
+          return;
+        }
+        var pct = Math.max(0, Math.min(100, Number(p.progress || 0)));
+
+        var msEdit = d.milestones.length ? d.milestones.map(function (m) {
+          function btn(st, label, cls) {
+            return '<button type="button" data-ms="' + m.id + '" data-st="' + st + '"' + (m.status === st ? ' class="' + cls + '"' : "") + ">" + label + "</button>";
+          }
+          return '<li><div class="row"><span class="nm">' + esc(m.title) + '</span>' +
+            '<button type="button" class="btn danger small" data-del-ms="' + m.id + '">Remove</button></div>' +
+            '<span class="status-btns">' +
+            btn("pending", "Pending", "on-pending") + btn("in_progress", "In progress", "on-active") + btn("done", "Done", "on-done") +
+            "</span></li>";
+        }).join("") : '<p class="empty">No milestones yet. Add the first one below.</p>';
+
+        var statusOptions = Object.keys(PSTATUS).map(function (k) {
+          return '<option value="' + k + '"' + (p.status === k ? " selected" : "") + ">" + PSTATUS[k].label + "</option>";
+        }).join("");
+
+        panel.innerHTML =
+          head +
+          '<div style="margin-top:16px"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700"><span>Overall progress</span><span>' + pct + '%</span></div>' +
+          '<div class="bar" style="margin-top:7px"><div style="width:' + pct + '%" class="' + (pct >= 100 ? "full" : "") + '"></div></div></div>' +
+
+          '<hr class="divider" /><h3>Project settings</h3>' +
+          '<form id="settingsForm" class="form-grid" style="margin-top:10px">' +
+            '<div><label class="field" for="setTitle">Project title</label><input type="text" id="setTitle" required value="' + esc(p.title) + '" /></div>' +
+            '<div class="form-2col">' +
+              '<div><label class="field" for="setStatus">Status</label><select id="setStatus">' + statusOptions + "</select></div>" +
+              '<div><label class="field" for="setProgress">Progress %</label><input type="number" id="setProgress" min="0" max="100" value="' + pct + '" /></div>' +
+            "</div>" +
+            '<div><label class="field" for="setTotal">Project value (' + esc(p.currency || "PKR") + ')</label><input type="number" id="setTotal" min="0" step="any" value="' + Number(p.total_amount || 0) + '" /></div>' +
+            '<div><button type="submit" class="btn ghost">Save settings</button></div></form>' +
+
+          '<hr class="divider" /><h3>Milestones</h3><p class="sub">Tap a status to update it. Progress recalculates from milestones and the client sees changes on their dashboard.</p>' +
+          '<ul class="ms-edit">' + msEdit + "</ul>" +
+          '<form id="addMsForm" class="form-row" style="margin-top:12px"><div><label class="field" for="msTitle">Add a milestone</label>' +
+          '<input type="text" id="msTitle" placeholder="e.g. Client review round" required /></div>' +
+          '<button type="submit" class="btn ghost">Add</button></form>' +
+
+          '<hr class="divider" /><h3>Post an update</h3><p class="sub">Appears at the top of the client\'s updates feed.</p>' +
+          '<form id="updateForm" class="form-grid" style="margin-top:10px">' +
+          '<div><label class="field" for="updTitle">Title</label><input type="text" id="updTitle" required placeholder="e.g. Development started" /></div>' +
+          '<div><label class="field" for="updBody">Details (optional)</label><textarea id="updBody" placeholder="What was done, what is next..."></textarea></div>' +
+          '<div><button type="submit" class="btn">Post update</button></div></form>' +
+
+          '<hr class="divider" /><h3>Payments</h3>' +
+          paymentsCard(p, d, true) +
+          '<form id="payForm" class="form-grid" style="margin-top:14px">' +
+            '<div class="form-2col">' +
+              '<div><label class="field" for="payAmount">Amount (' + esc(p.currency || "PKR") + ')</label><input type="number" id="payAmount" min="1" step="any" required placeholder="e.g. 40000" /></div>' +
+              '<div><label class="field" for="payStatus">Status</label><select id="payStatus"><option value="paid">Paid</option><option value="pending">Pending</option></select></div>' +
+            "</div>" +
+            '<div class="form-2col">' +
+              '<div><label class="field" for="payMethod">Method</label><select id="payMethod"><option>Bank transfer</option><option>JazzCash</option><option>EasyPaisa</option><option>Cash</option><option>Card</option><option>Other</option></select></div>' +
+              '<div><label class="field" for="payNote">Note (optional)</label><input type="text" id="payNote" placeholder="e.g. Advance payment" /></div>' +
+            "</div>" +
+            '<div><button type="submit" class="btn">Record payment</button></div></form>' +
+
+          '<hr class="divider" /><h3>Deliverables</h3>' +
+          deliverablesCard(d, true) +
+          '<form id="dlForm" class="form-grid" style="margin-top:12px">' +
+            '<div><label class="field" for="dlTitle">Title</label><input type="text" id="dlTitle" required placeholder="e.g. Homepage design preview" /></div>' +
+            '<div class="form-2col">' +
+              '<div><label class="field" for="dlKind">Kind</label><select id="dlKind"><option>Link</option><option>File</option><option>Preview</option><option>Document</option><option>Other</option></select></div>' +
+              '<div><label class="field" for="dlUrl">URL (optional)</label><input type="url" id="dlUrl" placeholder="https://..." /></div>' +
+            "</div>" +
+            '<div><button type="submit" class="btn ghost">Add deliverable</button></div></form>' +
+
+          '<hr class="divider" /><h3>Conversation</h3>' +
+          messagesFeed(d.messages, c.name) +
+          '<form id="founderMsgForm" style="margin-top:12px"><label class="field" for="founderMsg">Reply to ' + esc(c.name) + '</label>' +
+          '<textarea id="founderMsg" placeholder="Write a reply..." required></textarea>' +
+          '<div style="margin-top:10px"><button type="submit" class="btn ghost">Send reply</button></div></form>';
+
+        wireManagePanel(c, p);
+      }
+
+      function wireManagePanel(c, p) {
+        Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-ms]"), function (b) {
+          b.addEventListener("click", function () {
+            var id = b.getAttribute("data-ms");
+            var st = b.getAttribute("data-st");
+            var patch = { status: st, completed_at: st === "done" ? new Date().toISOString() : null };
+            sb.from("milestones").update(patch).eq("id", id)
+              .then(function (r) {
+                if (r.error) throw r.error;
+                return loadDetail(p.id);
+              })
+              .then(function () {
+                var newPct = progressFromMilestones(S.detail.milestones);
+                return sb.from("projects").update({ progress: newPct }).eq("id", p.id)
+                  .then(function (r) { if (r.error) throw r.error; });
+              })
+              .then(function () { return refreshFounder(); })
+              .then(function () { toast("Milestone updated for " + c.name + "."); })
+              .catch(function (e) { toast(errText(e)); });
+          });
+        });
+
+        Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-del-ms]"), function (b) {
+          b.addEventListener("click", function () {
+            if (!b.dataset.armed) {
+              b.dataset.armed = "1";
+              b.textContent = "Tap again to remove";
+              setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = "Remove"; } }, 3000);
+              return;
+            }
+            sb.from("milestones").delete().eq("id", b.getAttribute("data-del-ms"))
+              .then(function (r) {
+                if (r.error) throw r.error;
+                return loadDetail(p.id);
+              })
+              .then(function () {
+                var newPct = progressFromMilestones(S.detail.milestones);
+                return sb.from("projects").update({ progress: newPct }).eq("id", p.id)
+                  .then(function (r) { if (r.error) throw r.error; });
+              })
+              .then(function () { return refreshFounder(); })
+              .then(function () { toast("Milestone removed."); })
+              .catch(function (e) { toast(errText(e)); });
+          });
+        });
+
+        Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-mark-paid]"), function (b) {
+          b.addEventListener("click", function () {
+            sb.from("payments").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", b.getAttribute("data-mark-paid"))
+              .then(function (r) {
+                if (r.error) throw r.error;
+                return refreshFounder();
+              })
+              .then(function () { toast("Payment marked as paid."); })
+              .catch(function (e) { toast(errText(e)); });
+          });
+        });
+
+        Array.prototype.forEach.call($("managePanel").querySelectorAll("[data-del-deliverable]"), function (b) {
+          b.addEventListener("click", function () {
+            if (!b.dataset.armed) {
+              b.dataset.armed = "1";
+              b.textContent = "Tap again to remove";
+              setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = "Remove"; } }, 3000);
+              return;
+            }
+            sb.from("deliverables").delete().eq("id", b.getAttribute("data-del-deliverable"))
+              .then(function (r) {
+                if (r.error) throw r.error;
+                return refreshFounder();
+              })
+              .then(function () { toast("Deliverable removed."); })
+              .catch(function (e) { toast(errText(e)); });
+          });
+        });
+
+        $("settingsForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var patch = {
+            title: $("setTitle").value.trim(),
+            status: $("setStatus").value,
+            progress: Math.max(0, Math.min(100, Number($("setProgress").value) || 0)),
+            total_amount: Number($("setTotal").value) || 0
+          };
+          if (!patch.title) return;
+          sb.from("projects").update(patch).eq("id", p.id)
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Project settings saved."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+
+        $("addMsForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var title = $("msTitle").value.trim();
+          if (!title) return;
+          var nextOrder = S.detail.milestones.reduce(function (mx, m) { return Math.max(mx, m.sort_order || 0); }, 0) + 1;
+          sb.from("milestones").insert({ project_id: p.id, title: title, status: "pending", sort_order: nextOrder })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Milestone added."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+
+        $("updateForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var title = $("updTitle").value.trim();
+          var body = $("updBody").value.trim();
+          if (!title) return;
+          sb.from("updates").insert({ project_id: p.id, author_role: "founder", title: title, body: body || null })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Update posted. The client can see it now."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+
+        $("payForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var amt = Number($("payAmount").value);
+          if (!amt || amt <= 0) return;
+          var st = $("payStatus").value;
+          sb.from("payments").insert({
+            project_id: p.id,
+            amount: amt,
+            method: $("payMethod").value,
+            status: st,
+            paid_at: st === "paid" ? new Date().toISOString() : null,
+            note: $("payNote").value.trim() || null
+          })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Payment of " + money(amt, p.currency) + " recorded for " + c.name + "."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+
+        $("dlForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var title = $("dlTitle").value.trim();
+          if (!title) return;
+          sb.from("deliverables").insert({
+            project_id: p.id,
+            title: title,
+            kind: $("dlKind").value,
+            url: $("dlUrl").value.trim() || null
+          })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Deliverable added for " + c.name + "."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+
+        $("founderMsgForm").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var text = $("founderMsg").value.trim();
+          if (!text) return;
+          sb.from("messages").insert({ project_id: p.id, sender_role: "founder", body: text })
+            .then(function (r) {
+              if (r.error) throw r.error;
+              return refreshFounder();
+            })
+            .then(function () { toast("Reply sent."); })
+            .catch(function (e) { toast(errText(e)); });
+        });
+      }
+
+      function createProject(client, title, service, total) {
+        var today = new Date();
+        var isoDate = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+        var projectId = null;
+        return sb.from("projects").insert({
+          client_id: client.id,
+          title: title,
+          service: service,
+          status: "in_progress",
+          progress: 0,
+          total_amount: total,
+          currency: "PKR",
+          start_date: isoDate
+        }).select().single()
+          .then(function (r) {
+            if (r.error) throw r.error;
+            projectId = r.data.id;
+            var plan = MILESTONE_PLANS[service] || MILESTONE_PLANS["default"];
+            var rows = plan.map(function (name, i) {
+              return { project_id: projectId, title: name, status: i === 0 ? "in_progress" : "pending", sort_order: i + 1 };
+            });
+            return sb.from("milestones").insert(rows);
+          })
+          .then(function (r) {
+            if (r.error) throw r.error;
+            var plan = MILESTONE_PLANS[service] || MILESTONE_PLANS["default"];
+            return sb.from("updates").insert({
+              project_id: projectId,
+              author_role: "founder",
+              title: "Project created",
+              body: "Work starts with: " + plan[0] + "."
+            });
+          })
+          .then(function (r) {
+            if (r.error) throw r.error;
+            S.selClientId = client.id;
+            S.selProjectId = projectId;
+            return refreshFounder();
+          });
+      }
+
+      function renderFounderView() {
+        renderStats();
+        renderFilters();
+        renderClientRows();
+        renderManagePanel();
+      }
+
+      /* ---------- founder wiring ---------- */
+      $("clientSearch").addEventListener("input", function () {
+        S.search = this.value;
+        renderClientRows();
+      });
+
+      var svcSel = $("ncService");
+      svcSel.innerHTML = SERVICES.map(function (s) { return '<option value="' + esc(s) + '">' + esc(s) + "</option>"; }).join("");
+
+      $("addClientForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var name = $("ncName").value.trim();
+        var email = $("ncEmail").value.trim().toLowerCase();
+        var service = svcSel.value;
+        var title = $("ncTitle").value.trim();
+        var price = Number($("ncPrice").value) || 0;
+        if (!name || !email || !title) return;
+        var btn = ev.target.querySelector("button[type=submit]");
+        btn.disabled = true;
+        var newClient = null;
+        sb.from("clients").insert({
+          name: name,
+          email: email,
+          company: $("ncCompany").value.trim() || null,
+          phone: $("ncPhone").value.trim() || null,
+          service: service,
+          status: "active"
+        }).select().single()
+          .then(function (r) {
+            if (r.error) throw r.error;
+            newClient = r.data;
+            return createProject(newClient, title, service, price);
+          })
+          .then(function () {
+            btn.disabled = false;
+            ev.target.reset();
+            S.filter = "All";
+            S.search = "";
+            $("clientSearch").value = "";
+            renderFilters();
+            renderClientRows();
+            toast(name + " added. They can now sign in with " + email + " to see the project.");
+          })
+          .catch(function (e) {
+            btn.disabled = false;
+            toast(errText(e));
+          });
+      });
+
+      /* ---------- boot ---------- */
+      if (!sb) {
+        showOnly("authView");
+        setAuthMsg("The sign-in library could not load. Check your connection and reload the page.", "err");
+      } else {
+        sb.auth.getSession().then(function (r) {
+          var session = r.data && r.data.session;
+          if (session) enterApp(session.user);
+          else showOnly("authView");
+        }).catch(function () { showOnly("authView"); });
+
+        sb.auth.onAuthStateChange(function (event, session) {
+          if (event === "SIGNED_IN" && session) {
+            enterApp(session.user);
+          } else if (event === "SIGNED_OUT") {
+            enteredUserId = null;
+            S.user = null;
+            S.profile = null;
+            showOnly("authView");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
