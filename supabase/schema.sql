@@ -33,7 +33,7 @@ create table if not exists public.projects (
   service text,
   status text not null default 'in_progress' check (status in ('in_progress', 'review', 'waiting_on_client', 'completed')),
   progress int not null default 0 check (progress >= 0 and progress <= 100),
-  total_amount numeric not null default 0,
+  total_amount numeric not null default 0 check (total_amount >= 0),
   currency text not null default 'PKR',
   start_date date,
   created_at timestamptz not null default now()
@@ -64,7 +64,7 @@ create table if not exists public.updates (
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects (id) on delete cascade,
-  amount numeric not null,
+  amount numeric not null check (amount >= 0),
   method text,
   status text not null default 'paid' check (status in ('paid', 'pending')),
   paid_at timestamptz,
