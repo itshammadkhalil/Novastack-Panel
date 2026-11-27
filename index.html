@@ -911,6 +911,22 @@
         .loading-card::before { animation: none; }
       }
 
+      /* ================================================================
+         Live conversation — unread count badge. A small red circle with
+         the number of messages that arrived from the other side while
+         this conversation was not open: on the client's Conversation
+         heading, the founder's Messages tab and client rows, and the
+         sidebar Overview item (total across all clients).
+         ================================================================ */
+      .unread-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; height: 20px; padding: 0 6px; margin-left: 7px;
+        border-radius: 999px; background: var(--red); color: #fff;
+        font-size: 11.5px; font-weight: 800; line-height: 1; vertical-align: middle;
+      }
+      .unread-badge[hidden] { display: none; }
+      @media (prefers-color-scheme: dark) { .unread-badge { color: #33110d; } }
+      .client-row .unread-badge { margin-left: 6px; }
     </style>
   </head>
   <body>
@@ -1035,7 +1051,7 @@
           <aside class="founder-side">
             <div class="side-label">Founder Console</div>
             <nav class="side-nav" aria-label="Founder console sections">
-              <button type="button" data-ftab="overview" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
+              <button type="button" data-ftab="overview" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview<span class="unread-badge" data-badge-total hidden>0</span></button>
               <button type="button" data-ftab="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Add a client</button>
               <button type="button" data-ftab="tests"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Access tests<span class="nav-badge">12 checks</span></button>
             </nav>
@@ -1209,10 +1225,11 @@
         search: "",
         manageTab: "project",
         founderTab: "overview",
-        /* Live conversation state (this session only): the newest message
-           timestamp seen so far, and the ids already handled, so the
-           realtime feed and the polling fallback never show the same
-           message twice. */
+        /* Live conversation state (this session only): unread counts per
+           project, the newest message timestamp seen so far, and the ids
+           already handled, so the realtime feed and the polling fallback
+           never count or show the same message twice. */
+        unread: {},
         msgWatermark: null,
         seenIncoming: {}
       };
@@ -1795,7 +1812,7 @@
           });
         });
       }
-      /* ---------- live conversation: realtime ----------
+      /* ---------- live conversation: realtime + unread badges ----------
          Until now a message only appeared after a manual refresh: the
          thread was fetched once at load and never again. Now a Supabase
          Realtime subscription pushes every new message row the moment it
@@ -1803,7 +1820,55 @@
          ever receives their own project's messages), and a light poll
          every 20 seconds covers the case where the realtime feed is not
          available. Both paths run through handleIncomingMessage, which
-         dedupes by message id, so a message can never arrive twice. */
+         dedupes by message id, so a message can never arrive twice.
+
+         A message from the other side that lands while its conversation
+         is not open raises that project's unread count, shown as a red
+         number badge on the conversation's heading / tab / client row
+         (and as a total in the page title). Opening the conversation
+         clears its count. Counts live in memory for this session only. */
+      function unreadTotal() {
+        var t = 0;
+        for (var k in S.unread) t += S.unread[k] || 0;
+        return t;
+      }
+      function badgeHtml(projectId) {
+        var n = S.unread[projectId] || 0;
+        return '<span class="unread-badge" data-badge-for="' + esc(projectId) + '"' + (n ? "" : " hidden") + ">" + (n > 99 ? "99+" : String(n)) + "</span>";
+      }
+      function paintBadges() {
+        Array.prototype.forEach.call(document.querySelectorAll("[data-badge-for]"), function (el) {
+          var n = S.unread[el.getAttribute("data-badge-for")] || 0;
+          el.textContent = n > 99 ? "99+" : String(n);
+          el.hidden = n === 0;
+        });
+        var total = unreadTotal();
+        Array.prototype.forEach.call(document.querySelectorAll("[data-badge-total]"), function (el) {
+          el.textContent = total > 99 ? "99+" : String(total);
+          el.hidden = total === 0;
+        });
+        document.title = total > 0 ? "(" + total + ") NovaStack Dashboard" : "NovaStack Dashboard";
+      }
+      function bumpUnread(projectId) {
+        if (!projectId) return;
+        S.unread[projectId] = (S.unread[projectId] || 0) + 1;
+        paintBadges();
+      }
+      function clearUnread(projectId) {
+        if (projectId && S.unread[projectId]) {
+          delete S.unread[projectId];
+          paintBadges();
+        }
+      }
+      /* "Open" means the user is looking at this conversation right now:
+         it is the loaded project, the tab is in front, and (for the
+         founder) the Messages section is the active one. */
+      function isViewingConversation(projectId) {
+        if (document.hidden) return false;
+        if (!S.detail || S.detailProjectId !== projectId) return false;
+        if (S.role === "founder") return S.manageTab === "messages";
+        return true;
+      }
       function repaintOpenConversation() {
         if (!S.detail) return;
         if (S.role === "founder") { paintFounderConv(); return; }
@@ -1834,6 +1899,9 @@
             repaintOpenConversation();
           }
         }
+        if (row.sender_role !== S.role && !isViewingConversation(row.project_id)) {
+          bumpUnread(row.project_id);
+        }
       }
       var rtChannel = null;
       var pollTimer = null;
@@ -1849,7 +1917,7 @@
       function startRealtime() {
         if (!sb || rtChannel) return;
         /* Only messages newer than what the initial load already showed
-           may arrive live; anything older was on screen at sign-in. */
+           may count as unread; anything older was on screen at sign-in. */
         if (!S.msgWatermark) {
           var wm = null;
           if (S.detail) S.detail.messages.forEach(function (m) {
@@ -1873,10 +1941,12 @@
         rtChannel = null;
       }
       /* Returning to the tab catches up instantly instead of waiting for
-         the next poll tick. */
+         the next poll tick; for a client the conversation is on screen
+         again, so its unread count clears. */
       document.addEventListener("visibilitychange", function () {
         if (document.hidden) return;
         pollMessages();
+        if (S.role === "client" && S.detailProjectId) clearUnread(S.detailProjectId);
       });
 
       function paymentsCard(project, detail, forFounder) {
@@ -2042,7 +2112,7 @@
               waitingCard +
               paymentsCard(project, d, false) +
               deliverablesCard(d, false) +
-              '<div class="card" id="convCard"><div class="card-head"><div><h3>Conversation' + '</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
+              '<div class="card" id="convCard"><div class="card-head"><div><h3>Conversation' + badgeHtml(project.id) + '</h3><p class="sub">Messages between you and NovaStack about this project.</p></div></div>' +
                 '<div class="conv-feed">' + messagesFeed(d.messages, clientName) + "</div>" +
                 '<hr class="divider" />' +
                 '<form id="clientMsgForm"><label class="field" for="clientMsg">Message NovaStack</label>' +
@@ -2062,11 +2132,18 @@
         /* The conversation list scrolls inside its card; start it at the
            newest message, like a chat thread. */
         paintClientConv(project, clientName);
+        /* Opening or using the conversation clears its unread badge. */
+        var convCard = $("convCard");
+        if (convCard) {
+          convCard.addEventListener("click", function () { clearUnread(project.id); });
+          convCard.addEventListener("focusin", function () { clearUnread(project.id); });
+        }
         $("clientMsgForm").addEventListener("submit", function (ev) {
           ev.preventDefault();
           var input = $("clientMsg");
           var text = input.value.trim();
           if (!text) return;
+          clearUnread(project.id);
           /* Clear the box and show the message in the thread immediately;
              sendMessage saves it in the background with a "Sending..."
              marker, so there is nothing to re-click or refresh. */
@@ -2142,7 +2219,7 @@
           var pct = Math.max(0, Math.min(100, Number(p.progress || 0)));
           return '<li><button type="button" class="client-row' + (c.id === S.selClientId ? " selected" : "") + '" data-manage="' + esc(c.id) + '">' +
             '<span class="avatar">' + esc(initials(c.name)) + '</span><span class="col">' +
-            '<span class="r1"><span class="nm">' + esc(c.name) + "</span>" + statusChip(p.status) + "</span>" +
+            '<span class="r1"><span class="nm">' + esc(c.name) + badgeHtml(p.id) + "</span>" + statusChip(p.status) + "</span>" +
             '<span class="sv" style="display:block">' + esc(p.title) + '</span><span class="em">' + esc(c.email) + "</span>" +
             '<span class="bar mini-bar" style="display:block"><span style="display:block;height:100%;width:' + pct + '%;border-radius:999px;background:' + (pct >= 100 ? "var(--green)" : "var(--brand)") + '"></span></span>' +
             '<span class="r3"><span>' + pct + '% complete</span><span>' + money(p.total_amount, p.currency) + " value</span></span>" +
@@ -2232,7 +2309,7 @@
             '<button type="button" data-mtab="project" class="active" role="tab" aria-selected="true">Project</button>' +
             '<button type="button" data-mtab="updates" role="tab" aria-selected="false">Updates</button>' +
             '<button type="button" data-mtab="payments" role="tab" aria-selected="false">Payments &amp; files</button>' +
-            '<button type="button" data-mtab="messages" role="tab" aria-selected="false">Messages</button>' +
+            '<button type="button" data-mtab="messages" role="tab" aria-selected="false">Messages' + badgeHtml(p.id) + '</button>' +
           '</div>' +
 
           '<div class="manage-section" data-msec="project">' +
@@ -2317,6 +2394,9 @@
             s.hidden = s.getAttribute("data-msec") !== key;
           });
           S.manageTab = key;
+          /* Opening the Messages section means the founder is reading
+             this conversation now, so its unread badge clears. */
+          if (key === "messages") clearUnread(p.id);
         }
         Array.prototype.forEach.call(tabBtns, function (b) {
           b.addEventListener("click", function () { showManageTab(b.getAttribute("data-mtab")); });
@@ -2900,8 +2980,10 @@
             S.myClient = null;
             S.detail = null;
             S.detailProjectId = null;
+            S.unread = {};
             S.msgWatermark = null;
             S.seenIncoming = {};
+            paintBadges();
             S.selClientId = null;
             S.selProjectId = null;
             S.filter = "All";
