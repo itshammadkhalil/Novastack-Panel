@@ -191,7 +191,7 @@ create policy "client send messages" on public.messages
 --     After the founder signs up, set their profile role to 'founder' once:
 --     update public.profiles set role = 'founder' where email = '<founder email>';
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, email, full_name, role)
   values (new.id, new.email, new.raw_user_meta_data ->> 'full_name', 'client')
